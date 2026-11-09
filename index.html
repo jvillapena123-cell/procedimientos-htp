@@ -1406,15 +1406,21 @@ views.usuarios={
 };
 async function boot(){
   if(!window.firebase||!CFG.firebase||!CFG.firebase.apiKey){$("#status").textContent="";$("#view").innerHTML='<div class="empty"><b>Falta configurar Firebase.</b>Complete el archivo firebase-config.js con los datos de su proyecto (vea README.md).</div>';return}
-  firebase.initializeApp(CFG.firebase);auth=firebase.auth();fdb=firebase.firestore();storage=(CFG.usarStorage&&firebase.storage)?firebase.storage():null;
+  firebase.initializeApp(CFG.firebase);auth=firebase.auth();fdb=firebase.firestore();try{fdb.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}storage=(CFG.usarStorage&&firebase.storage)?firebase.storage():null;
   S.downloads={save:async({filename,data})=>{const blob=data instanceof Blob?data:new Blob([data]);const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000);return{status:"saved"}}};
   S.sample=aiAdapter();S.ready=true;
   auth.onAuthStateChanged(async u=>{
     if(userUnsub){userUnsub();userUnsub=null}stopData();S.db=null;
     if(!u){S.uid=null;showLogin();return}
-    S.uid=u.uid;$("#status").textContent="Verificando cuenta…";
+    S.uid=u.uid;$("#status").textContent="";
+    document.body.classList.remove("authok");
+    $("#view").innerHTML=`<section class="login panel stack"><p class="eyebrow">Sesión iniciada</p><h1>Verificando su cuenta</h1><p class="row"><span class="spin"></span> Conectando con la base de datos como <b>${esc(u.email||"")}</b>…</p><p class="small muted" id="vf-msg"></p><div class="row"><button class="btn" id="vf-out">Cerrar sesión</button></div></section>`;
+    $("#vf-out").onclick=()=>auth.signOut();
+    const slow=setTimeout(()=>{const m=$("#vf-msg");if(m)m.innerHTML='La conexión está tardando más de lo normal. Si está en la red de la empresa, puede que bloquee Firebase: pruebe desde el celular con datos móviles o pida a TI habilitar <code>firestore.googleapis.com</code>. <button class="btn sm" onclick="location.reload()">Reintentar</button>'},15000);
     const ref=fdb.doc(`usuarios/${u.uid}`);
-    try{const s=await ref.get();if(!s.exists)await ref.set({nombre:S.pendingName||u.displayName||u.email,email:u.email||"",rol:"pendiente",creado:Date.now()})}catch(e){$("#status").textContent="No se pudo registrar la cuenta: "+errMsg(e);return}
+    try{const s=await ref.get();if(!s.exists)await ref.set({nombre:S.pendingName||u.displayName||u.email,email:u.email||"",rol:"pendiente",creado:Date.now()})}
+    catch(e){clearTimeout(slow);const m=$("#vf-msg");if(m)m.innerHTML=`No se pudo leer su cuenta: ${esc(e.code||"")} ${esc(e.message||"")}. <button class="btn sm" onclick="location.reload()">Reintentar</button>`;return}
+    clearTimeout(slow);
     let lastRol=null;
     userUnsub=ref.onSnapshot(s=>{const d=s.data()||{};S.me={name:d.nombre||u.displayName||u.email};S.rol=d.rol||"pendiente";
       if(S.rol===lastRol){renderWho(u);return}lastRol=S.rol;
