@@ -214,6 +214,8 @@ table.dt td{font-size:.85rem}
 .miper td.ctl{min-width:240px}
 .vfrow{display:flex;gap:8px;flex-wrap:wrap}
 .vfrow label{border:1px solid var(--line);min-width:150px}
+.drop{border:2px dashed var(--line);padding-block:28px}
+.drop.over{border-color:var(--accent);background:var(--info-bg)}
 .sigs{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 
 body:not(.authok) nav.tabs{display:none}
@@ -274,6 +276,7 @@ dialog ol{margin:0;padding-left:20px}
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 "use strict";
 const LOGO = document.querySelector('.logo img').src;
@@ -533,7 +536,7 @@ views.detalle={
     if(!p){el.innerHTML=`<div class="empty"><b>${S.loaded?"Este instructivo no existe o fue eliminado.":"Cargando…"}</b><a href="#procedimientos">Volver a la biblioteca</a></div>`;return}
     const regs=allRegs().filter(r=>r.pid===p.id&&!r.anulado).sort((a,b)=>b.fecha-a.fecha);
     const nq=(p.preguntasProc||[]).length+(p.preguntasMat||[]).length;
-    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`]];
+    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`],["rev","Buscar mejoras"]];
     el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / ${esc(p.codigo||"")}</p><h1>${esc(p.titulo)}</h1>
       <p class="lede">Versión ${esc(p.version)} · ${esc(p.proceso||p.area||"")} · Aprobación ${esc(p.aprobacion||80)}% · ${p.estado==="borrador"?'<span class="chip warn">Borrador</span>':'<span class="chip ok">Vigente</span>'}</p></div>
       <div class="actions">${p.estado!=="borrador"?`<button class="btn primary" id="go-ev">Difundir y evaluar</button>`:""}${S.canEdit?`<a class="btn" href="#editar-${esc(p.id)}">Editar</a><button class="btn" id="dl-word">IT en Word</button><button class="btn" id="dl-eval" ${nq?"":"disabled"}>Evaluación en Word</button>`:""}<a class="btn ghost" href="#mejoras" id="go-mej">Sugerir mejora</a></div></section>
@@ -546,6 +549,7 @@ views.detalle={
     $("#go-mej",el).onclick=()=>{S.mejPid=p.id};
     const c=$("#tabc",el);
     if(this.tab==="doc")c.innerHTML=`<div class="panel">${docBodyHTML(p)}</div>`;
+    if(this.tab==="rev"){c.innerHTML='<div class="panel" id="rev-box"></div>';showRevision(p,$("#rev-box",c));return}
     if(this.tab==="mat")c.innerHTML=`<div class="panel">${matrixHTML(p.matriz,p)}</div>`;
     if(this.tab==="preg")c.innerHTML=`<div class="panel stack"><h3>Evaluación del instructivo</h3>${qsHTML(p.preguntasProc,S.canEdit)}<h3>Evaluación de la MIPER</h3>${qsHTML(p.preguntasMat,S.canEdit)}${S.canEdit?"":'<p class="hint">La pauta de corrección solo la ven los editores.</p>'}</div>`;
     if(this.tab==="reg"){
@@ -1275,6 +1279,207 @@ ${w.texto.slice(0,70000)}`;
       toast(e.code==="not_granted"?"No se autorizó el uso de IA en esta página.":e.code==="rate_limited"?"Límite de uso alcanzado. Intente más tarde.":e.code==="invalid_json"?"La respuesta llegó incompleta. Intente con menos documentos a la vez.":errMsg(e))}
   }
 };
+
+/* ---------- carga simple: subir Word o PDF → lista → buscar mejoras ---------- */
+async function readPdfText(file){
+  if(!window.pdfjsLib)throw{message:"No se pudo cargar el lector de PDF. Recargue la página."};
+  try{if(!pdfjsLib.GlobalWorkerOptions.workerSrc)pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}catch{}
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;const out=[];
+  for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n);const tc=await pg.getTextContent();const rows={};
+    tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/3)*3;(rows[y]??=[]).push({x:it.transform[4],s:it.str})});
+    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>out.push(rows[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(" ").replace(/\s{2,}/g," ").trim()))}
+  return out.join("\n");
+}
+function itFromPdfText(txt){
+  const raw=txt.split("\n").map(l=>l.trim()).filter(Boolean);const cnt={};raw.forEach(l=>cnt[l]=(cnt[l]||0)+1);
+  const lines=raw.filter(l=>cnt[l]<3&&!/p[áa]gina\s+\d+\s+de\s+\d+/i.test(l));
+  const d={secciones:[]};const m=txt.match(CODE_RE);if(m)d.codigo=m[0];
+  d.titulo=(lines.slice(0,20).find(l=>l.length>8&&!CODE_RE.test(l)&&!/:/.test(l)&&!/identificaci|contenido/i.test(l)&&!/^\d+\./.test(l))||"").trim();
+  const H=/^(\d{1,2})\.\s+([A-ZÁÉÍÓÚÑ][^.]{2,70})$/;
+  const parse=start=>{const secs=[];let cur=null,expect=1;for(let k=start;k<lines.length;k++){const l=lines[k];const h=l.match(H);
+    if(h&&+h[1]===expect){cur={titulo:`${h[1]}. ${h[2].trim()}`,lines:[]};secs.push(cur);expect++;continue}if(cur)cur.lines.push(l)}
+    return secs.map(x=>({titulo:x.titulo,texto:x.lines.join("\n").trim()}))};
+  let best=[];lines.forEach((l,k)=>{const h=l.match(H);if(h&&+h[1]===1){const r=parse(k);const score=r.filter(x=>x.texto.length>20).length;if(score>best.filter(x=>x.texto.length>20).length)best=r}});
+  d.secciones=best;return d;
+}
+function classifyText(t){if(/peligro/i.test(t)&&/(evaluaci[óo]n residual|VEP)/i.test(t))return"miper";if(/afirmaci[óo]n/i.test(t)&&/(pauta de correcci[óo]n|verdadera|\(V\))/i.test(t))return"eval";return"it"}
+const KIND_L={it:"Instructivo",miper:"MIPER",eval:"Evaluación"};
+async function analyzeFile(f){
+  const r={name:f.name,kind:"it",partial:{},ok:false,msg:"",text:"",code:""};
+  const isPdf=/\.pdf$/i.test(f.name)||f.type==="application/pdf";
+  try{
+    if(isPdf){r.text=await readPdfText(f);r.kind=classifyText(r.text);r.pdf=true;
+      if(r.kind==="it"){const d=itFromPdfText(r.text);r.partial=d;r.code=d.codigo||"";r.ok=d.secciones.length>=3;r.msg=r.ok?`${d.secciones.length} secciones`:"no se reconocieron las secciones"}
+      else{r.code=(r.text.match(CODE_RE)||[""])[0];r.ok=false;r.msg="PDF: las tablas requieren ordenar con IA"}}
+    else{if(!window.mammoth)throw{message:"No se pudo cargar el lector de Word. Recargue la página."};
+      const box=await readDocxHtml(f);r.text=box.textContent;r.kind=classifyDocx(box);
+      if(r.kind==="it"){const d=parseItDocx(box);r.partial=d;r.code=d.codigo||"";r.ok=d.secciones.length>0;r.msg=`${d.secciones.length} secciones`}
+      else if(r.kind==="miper"){const d=parseMiperDocx(box);r.partial=d;r.code=d.codigo||"";r.ok=d.matriz.length>0;r.msg=`${d.matriz.length} filas`}
+      else{const d=parseEvalDocx(box);r.partial=d;r.ok=d.preguntasProc.length>0;r.msg=`${d.preguntasProc.length} afirmaciones${d.sinPauta?", sin pauta":""}`}
+      if(!r.code)r.code=(r.text.match(CODE_RE)||[""])[0]}
+  }catch(e){r.msg=e.message||"no se pudo leer el archivo";r.error=true}
+  if(!r.code)r.code=(f.name.match(CODE_RE)||[""])[0];
+  return r;
+}
+function mergePartial(d,r){const p=r.partial||{};
+  if(r.kind==="it"){["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.firmasDoc)d.firmasDoc=p.firmasDoc;if(p.secciones&&p.secciones.length)d.secciones=p.secciones}
+  if(r.kind==="miper"){["tarea","tipoTarea","lugares"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.matriz&&p.matriz.length)d.matriz=p.matriz.map(normRow)}
+  if(r.kind==="eval"){if(p.preguntasProc&&p.preguntasProc.length)d.preguntasProc=p.preguntasProc;if(p.aprobacion)d.aprobacion=p.aprobacion}
+}
+function procDocFromDraft(d,base){const str=v=>String(v??"").trim();const b=base||{};
+  return{codigo:str(d.codigo),titulo:str(d.titulo)||str(d.codigo),version:str(d.version)||"01",versionAnterior:str(d.versionAnterior),area:d.area||AREAS[0],estado:d.estado||"vigente",aprobacion:Math.min(100,Math.max(0,+d.aprobacion||80)),
+    proceso:str(d.proceso),subproceso:str(d.subproceso),actividad:str(d.actividad),sistemas:str(d.sistemas),tarea:str(d.tarea),tipoTarea:str(d.tipoTarea),lugares:str(d.lugares),firmasDoc:withFirmas(d),
+    secciones:(d.secciones||[]).filter(s=>s.titulo||s.texto),matriz:(d.matriz||[]).map(r=>({...normRow(r),p:pcOpt(r.p),c:pcOpt(r.c),pr:pcOpt(r.pr),cr:pcOpt(r.cr)})),
+    preguntasProc:(d.preguntasProc||[]).map(compactQ),preguntasMat:(d.preguntasMat||[]).map(compactQ),
+    docAssetId:d.docAssetId||b.docAssetId||null,docNombre:d.docNombre||b.docNombre||null,docUrl:d.docUrl||b.docUrl||null,createdAt:b.createdAt||Date.now(),updatedAt:Date.now(),updatedBy:S.uid};
+}
+/* revisión: chequeos automáticos + análisis con IA */
+function quickChecks(p){
+  const out=[];const add=(prioridad,seccion,hallazgo,propuesta)=>out.push({prioridad,seccion,hallazgo,propuesta});const f=withFirmas(p);
+  FIRMAS_K.forEach(([k,l])=>{if(!f[k].nombre)add("Media","Identificación",`${l}: falta el nombre.`,`Completar quién ${l.toLowerCase()} el documento.`);if(!f[k].fecha)add("Baja","Identificación",`${l}: falta la fecha.`,"Registrar la fecha antes de publicar la versión.")});
+  ["proceso","subproceso","actividad"].forEach(k=>{if(!p[k])add("Baja","Identificación",`Falta el campo ${k}.`,"Completar la identificación del documento.")});
+  const secs=p.secciones||[];IT_SECS.forEach(t=>{const n=t.split(".")[0];const s=secs.find(x=>String(x.titulo).trim().startsWith(n+"."));if(!s)add("Media",t,"La sección no existe en el instructivo.","Agregar la sección según el formato HTP.");else if(String(s.texto).trim().length<20)add("Media",t,"La sección está vacía o casi vacía.","Desarrollar el contenido de la sección.")});
+  secs.forEach(s=>{const m=String(s.texto).match(/\[(completar|por definir|nombre|dd\/mm\/aaaa)[^\]]*\]/gi);if(m)add("Media",s.titulo,`Quedan ${m.length} campos pendientes (${[...new Set(m)].slice(0,3).join(", ")}).`,"Completar los datos pendientes antes de difundir.")});
+  const mx=(p.matriz||[]).map(normRow);
+  if(!mx.length)add("Alta","MIPER","El instructivo no tiene MIPER cargada.","Cargar la matriz de la tarea (DS 44).");
+  mx.forEach((r,i)=>{const n=`Fila ${i+1}`;
+    if(r.p&&r.c&&r.pr&&r.cr&&r.pr*r.cr>r.p*r.c)add("Alta","MIPER",`${n}: el VEP residual (${r.pr*r.cr}) es mayor que el inicial (${r.p*r.c}).`,"Revisar la evaluación residual.");
+    if(r.pr&&r.cr&&r.pr*r.cr>=8)add("Alta","MIPER",`${n} (${r.riesgo||r.peligro}): el riesgo residual sigue ${mrInfo(r.pr,r.cr).t} (${r.pr*r.cr}).`,"No iniciar la tarea hasta reducirlo: agregar controles de ingeniería o eliminación.");
+    if(r.p&&r.c&&r.pr&&r.cr&&r.pr*r.cr===r.p*r.c&&r.p*r.c>=4)add("Media","MIPER",`${n}: los controles no reducen el VEP (${r.p*r.c} → ${r.pr*r.cr}).`,"Revisar la eficacia de las medidas o agregar controles de mayor jerarquía.");
+    if(!String(r.control).trim())add("Alta","MIPER",`${n}: no tiene medidas de control.`,"Definir controles según la jerarquía del DS 44.");
+    else if(!/(ingenier|eliminaci|sustituci)/i.test(r.control)&&r.p*r.c>=8)add("Media","MIPER",`${n}: riesgo ${mrInfo(r.p,r.c).t} controlado solo con medidas administrativas o EPP.`,"Evaluar controles de ingeniería, eliminación o sustitución.");
+    if(!String(r.responsable).trim())add("Baja","MIPER",`${n}: falta el responsable.`,"Asignar un responsable a la fila.");});
+  const qs=p.preguntasProc||[];if(!qs.length)add("Alta","Evaluación","No hay evaluación del instructivo.","Cargar o generar 10 afirmaciones V/F.");
+  else{if(qs.length<10&&qs.every(q=>q.tipo==="vf"))add("Baja","Evaluación",`La evaluación tiene ${qs.length} afirmaciones (el formato usa 10).`,"Completar hasta 10 afirmaciones.");
+    const nj=qs.filter(q=>!String(q.just||"").trim()).length;if(nj)add("Media","Evaluación",`${nj} afirmaciones sin justificación en la pauta.`,"Agregar la justificación citando el paso o sección.");
+    const vf=qs.filter(q=>q.tipo==="vf");if(vf.length>=6){const fal=vf.filter(q=>q.ok===1).length;if(fal<2||fal>vf.length-2)add("Baja","Evaluación",`Desbalance de respuestas: ${fal} falsas de ${vf.length}.`,"Equilibrar verdaderas y falsas para evitar respuestas al azar.")}}
+  const crit=(String((secs.find(s=>/^7\./.test(s.titulo))||{}).texto).match(/\((CS|VH|AC|IP|[A-Z]{2})\)/g)||[]);const allQ=qs.map(q=>q.q+" "+(q.just||"")).join(" ").toLowerCase();
+  if(crit.includes("(CS)")&&qs.length&&!/(carga|izaje|suspend|imant|gr[úu]a)/.test(allQ))add("Media","Evaluación","Ninguna afirmación evalúa el riesgo crítico (CS) de caída de carga.","Agregar una afirmación sobre cargas suspendidas o izaje.");
+  if(crit.includes("(VH)")&&qs.length&&!/(veloc|cami[óo]n|veh[íi]cul|atropell|tr[áa]nsito)/.test(allQ))add("Media","Evaluación","Ninguna afirmación evalúa el riesgo crítico (VH) de contacto con vehículos.","Agregar una afirmación sobre tránsito o velocidad.");
+  return out;
+}
+function revisionHTML(p,list,resumen,origen){
+  const pr={Alta:"bad",Media:"warn",Baja:"info"};const ord={Alta:0,Media:1,Baja:2};const L=list.slice().sort((a,b)=>(ord[a.prioridad]??3)-(ord[b.prioridad]??3));
+  return`${resumen?`<p style="margin-bottom:10px">${esc(resumen)}</p>`:""}
+  ${L.length?`<div class="tbl-wrap"><table><thead><tr><th>Prioridad</th><th>Sección</th><th>Hallazgo</th><th>Propuesta de mejora</th><th></th></tr></thead><tbody>
+  ${L.map((m,i)=>`<tr><td><span class="chip ${pr[m.prioridad]||""}">${esc(m.prioridad||"—")}</span></td><td class="small">${esc(m.seccion)}</td><td>${esc(m.hallazgo)}</td><td>${esc(m.propuesta)}</td><td><button class="btn sm" data-send="${i}">A Mejoras</button></td></tr>`).join("")}</tbody></table></div>
+  <div class="row" style="margin-top:10px"><button class="btn" id="rv-all">Enviar todas a Mejoras</button><span class="hint">${origen}</span></div>`:'<div class="empty"><b>Sin observaciones.</b>No se encontraron brechas en esta revisión.</div>'}`;
+}
+async function sendToMejoras(p,items){
+  if(!S.db)throw{message:"Sin conexión a la base de datos"};
+  for(const m of items){const id=nid();await S.db.doc(`mejoras/${S.uid}/items/${id}`).set({pid:p.id||null,codigo:p.codigo||"General",titulo:p.titulo||"",tipo:"Mejora propuesta (revisión)",texto:`[${m.prioridad}] ${m.seccion}: ${m.hallazgo}\nPropuesta: ${m.propuesta}`,nombre:"Revisión automática",estado:"nueva",respuesta:"",fecha:Date.now()})}
+  await S.db.doc(`mejoras/${S.uid}`).set({updatedAt:Date.now()});
+}
+function showRevision(p,box){
+  let list=quickChecks(p),resumen="",origen="Chequeos automáticos del formato HTP, DS 44 y evaluación.";
+  const paint=()=>{box.innerHTML=`<div class="stack"><div class="row"><h3 class="sp">Buscar mejoras · ${esc(p.codigo||p.titulo||"")}</h3><button class="btn orange" id="rv-ai" ${S.sample?"":"disabled"}>Análisis profundo con IA</button></div>${revisionHTML(p,list,resumen,origen)}</div>`;
+    $$("[data-send]",box).forEach(b=>b.onclick=async()=>{b.disabled=true;try{const L=list.slice().sort((a,b)=>({Alta:0,Media:1,Baja:2}[a.prioridad]??3)-({Alta:0,Media:1,Baja:2}[b.prioridad]??3));await sendToMejoras(p,[L[+b.dataset.send]]);b.textContent="Enviada ✓"}catch(e){b.disabled=false;toast(errMsg(e))}});
+    $("#rv-all",box)&&($("#rv-all",box).onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{await sendToMejoras(p,list);toast(`${list.length} mejoras enviadas a la bandeja`);b.textContent="Enviadas ✓"}catch(err){b.disabled=false;toast(errMsg(err))}});
+    $("#rv-ai",box).onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.innerHTML='<span class="spin"></span> Analizando…';
+      const prompt=`Eres auditor de seguridad y calidad (ISO 9001, ISO 45001, DS 44 y Guía ISP) en ${HTP_CTX}
+Revisa este instructivo de trabajo, su MIPER y su evaluación, y entrega hasta 12 oportunidades de mejora concretas y accionables, priorizadas. Revisa en especial:
+- Coherencia IT ↔ MIPER: cada paso con riesgo tiene su fila en la MIPER y cada control de la MIPER aparece en la IT; códigos de control citados que existen.
+- Jerarquía de controles DS 44: riesgos Importantes o Intolerables controlados solo con medidas administrativas o EPP; VEP residual que no baja.
+- Riesgos críticos (CS, VH, AC, IP) sin controles suficientes; peligros evidentes de la tarea que faltan.
+- Responsabilidades, registros e indicadores incompletos o sin responsable, código o meta.
+- Evaluación: afirmaciones ambiguas, con respuesta discutible, que no cubren los riesgos críticos o con justificación incorrecta.
+- Claridad para el trabajador de terreno.
+No repitas observaciones de forma: cosas como nombres o fechas vacías ya se revisan aparte.
+Devuelve SOLO JSON: {"resumen":"2 frases con la evaluación general","mejoras":[{"prioridad":"Alta|Media|Baja","seccion":"ej. 8.3 Paso 6 / MIPER fila 3 / Evaluación 4","hallazgo":"","propuesta":""}]}
+
+INSTRUCTIVO ${p.codigo} — ${p.titulo} (versión ${p.version})
+${(p.secciones||[]).map(s=>s.titulo+"\n"+s.texto).join("\n\n").slice(0,30000)}
+
+MIPER:
+${(p.matriz||[]).map((r0,i)=>{const r=normRow(r0);return`${i+1}. Etapa: ${r.etapa} | Puestos: ${r.puestos} | Peligro: ${r.peligro} | Riesgo: ${r.riesgo} | Inicial P${r.p??"-"}×C${r.c??"-"} ${r.evalIni||""} | Controles: ${r.control} | Residual P${r.pr??"-"}×C${r.cr??"-"} ${r.evalRes||""} | Resp: ${r.responsable}`}).join("\n").slice(0,15000)}
+
+EVALUACIÓN:
+${(p.preguntasProc||[]).map((q,i)=>`${i+1}. ${q.q} → ${q.tipo==="vf"?(q.ok?"F":"V"):"abcd"[q.ok]} (${q.just||"sin justificación"})`).join("\n")}`;
+      try{const r=await S.sample.json(prompt,{modelTier:"complex"});const ai=(Array.isArray(r.mejoras)?r.mejoras:[]).filter(m=>m&&m.hallazgo).map(m=>({prioridad:["Alta","Media","Baja"].includes(m.prioridad)?m.prioridad:"Media",seccion:String(m.seccion||""),hallazgo:String(m.hallazgo),propuesta:String(m.propuesta||"")}));
+        list=[...ai,...list];resumen=String(r.resumen||"");origen="Análisis con IA más chequeos automáticos. Revise cada propuesta antes de aplicarla.";paint()}
+      catch(err){b.disabled=false;b.textContent="Análisis profundo con IA";toast(err.code==="not_granted"?"No se autorizó el uso de IA.":err.code==="cancelled"?"Análisis cancelado.":errMsg(err))}};
+  };
+  paint();
+}
+Object.assign(views.cargar,{
+  tab:"archivos",
+  render(){
+    const el=this.el;
+    if(this.tab==="excel"){el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#cargar" id="back-files" style="color:inherit">Cargar</a> / Planilla Excel</p><h1>Carga masiva con planilla</h1><p class="lede">Para cargar muchos instructivos a la vez con el formato de planilla.</p></div><div class="actions"><button class="btn" id="back-files2">Volver a subir archivos</button></div></section><div id="cg"></div>`;
+      const back=e=>{e.preventDefault();this.tab="archivos";this.render()};$("#back-files",el).onclick=back;$("#back-files2",el).onclick=back;this.renderExcel();return}
+    this.groups??={};const G=Object.values(this.groups);
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Cargar</p><h1>Cargar instructivos</h1><p class="lede">Suba los Word o PDF del instructivo, su MIPER y su evaluación. Puede subir varios a la vez: la app los reconoce y los agrupa por código.</p></div></section>
+      <section class="panel drop" id="drop"><div class="stack" style="align-items:center;text-align:center;gap:10px">
+        <b style="font-family:var(--display);font-size:1.1rem">Arrastre aquí los archivos o</b>
+        <label class="btn primary" for="up">Subir Word o PDF</label><input type="file" id="up" multiple accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+        <span class="hint">Instructivo (IT), MIPER y evaluación, en .docx o .pdf. <span id="up-st"></span></span></div></section>
+      <section class="panel" style="margin-top:16px"><h2>Instructivos detectados <small>${G.length?`${G.length} en la lista`:""}</small></h2><div id="glist"></div></section>
+      <div id="rev" style="margin-top:16px"></div>
+      <p class="small muted" style="margin-top:16px">¿Muchos instructivos a la vez? <a href="#cargar" id="to-excel">Usar la planilla Excel</a>.</p>`;
+    $("#to-excel",el).onclick=e=>{e.preventDefault();this.tab="excel";this.render()};
+    $("#up",el).onchange=e=>this.addFiles([...e.target.files]);
+    const dz=$("#drop",el);dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("over")});dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
+    dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("over");this.addFiles([...e.dataTransfer.files].filter(f=>/\.(docx|pdf)$/i.test(f.name)))});
+    this.renderList();
+  },
+  async addFiles(fs){
+    if(!fs.length)return;const st=$("#up-st");st.innerHTML=`<span class="spin"></span> Leyendo ${fs.length} archivo${fs.length>1?"s":""}…`;
+    const res=[];for(const f of fs)res.push(await analyzeFile(f));
+    let n=0;const noCode=res.filter(r=>!r.code);
+    res.forEach(r=>{let code=normCode(r.code);if(!code){const only=Object.keys(this.groups);code=only.length===1&&noCode.length===res.length?only[0]:(noCode.length&&res.some(x=>x.code)?normCode(res.find(x=>x.code).code):"SIN-CODIGO")}
+      const g=this.groups[code]??=(()=>{const base=S.procs.find(p=>normCode(p.codigo)===code)||null;const d=base?Object.assign(blankProc(),clone(base)):blankProc();d.matriz=(d.matriz||[]).map(normRow);if(!base&&code!=="SIN-CODIGO")d.codigo=r.code;d.estado=base?base.estado:"vigente";return{code,base,draft:d,files:[]}})();
+      g.files=g.files.filter(x=>!(x.name===r.name));g.files.push(r);if(r.ok)mergePartial(g.draft,r);n++});
+    st.textContent=`${n} archivo${n>1?"s":""} leído${n>1?"s":""}.`;this.render();
+  },
+  renderList(){
+    const box=$("#glist");const G=Object.values(this.groups);
+    if(!G.length){box.innerHTML='<div class="empty"><b>Aún no ha subido archivos.</b>Cuando suba el Word o PDF, aquí aparecerá cada instructivo con lo que se reconoció.</div>';return}
+    const chip=(g,k)=>{const fs=g.files.filter(f=>f.kind===k);if(!fs.length)return'<span class="chip">—</span>';const f=fs[fs.length-1];return`<span class="chip ${f.ok?"ok":f.error?"bad":"warn"}" title="${esc(f.name)}">${f.ok?"✓ ":""}${esc(f.msg)}</span>`};
+    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Código</th><th>Título</th><th>Instructivo</th><th>MIPER</th><th>Evaluación</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+    ${G.map(g=>{const d=g.draft;const needAI=g.files.some(f=>!f.ok&&!f.error);return`<tr><td class="code">${esc(d.codigo||g.code)}${g.base?'<div><span class="chip">ya existe</span></div>':'<div><span class="chip info">nuevo</span></div>'}</td><td>${esc(d.titulo||"(sin título)")}<div class="small muted">${esc(g.files.map(f=>f.name).join(" · "))}</div></td>
+      <td>${chip(g,"it")}</td><td>${chip(g,"miper")}</td><td>${chip(g,"eval")}</td>
+      <td><select data-est="${esc(g.code)}" style="width:auto"><option value="vigente"${d.estado!=="borrador"?" selected":""}>Vigente</option><option value="borrador"${d.estado==="borrador"?" selected":""}>Borrador</option></select></td>
+      <td><div class="row" style="flex-wrap:nowrap">${needAI?`<button class="btn sm orange" data-ai="${esc(g.code)}">Ordenar con IA</button>`:""}<button class="btn sm" data-rev="${esc(g.code)}">Buscar mejoras</button><button class="btn sm" data-ed="${esc(g.code)}">Revisar</button><button class="btn sm ghost" data-rm="${esc(g.code)}">Quitar</button></div></td></tr>`}).join("")}
+    </tbody></table></div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="save-all">Guardar ${G.length} en la biblioteca</button><span class="small muted" id="save-st">Puede revisar cada uno antes o guardarlos directamente.</span></div>`;
+    $$("[data-est]",box).forEach(s=>s.onchange=()=>{this.groups[s.dataset.est].draft.estado=s.value});
+    $$("[data-rm]",box).forEach(b=>b.onclick=()=>{delete this.groups[b.dataset.rm];this.render()});
+    $$("[data-ed]",box).forEach(b=>b.onclick=()=>{const g=this.groups[b.dataset.ed];S.draft=Object.assign(clone(g.draft),g.base?{id:g.base.id}:{});delete this.groups[b.dataset.ed];location.hash=g.base?"#editar-"+g.base.id:"#nuevo"});
+    $$("[data-rev]",box).forEach(b=>b.onclick=()=>{const g=this.groups[b.dataset.rev];const rv=$("#rev");rv.className="panel";showRevision(Object.assign({},g.draft,g.base?{id:g.base.id}:{}),rv);rv.scrollIntoView({behavior:"smooth",block:"start"})});
+    $$("[data-ai]",box).forEach(b=>b.onclick=()=>this.aiGroup(b.dataset.ai,b));
+    $("#save-all",box).onclick=e=>this.saveAll(e.currentTarget);
+  },
+  async aiGroup(code,btn){
+    const g=this.groups[code];btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+    const txt=g.files.map(f=>`===== ARCHIVO: ${f.name} (${KIND_L[f.kind]}) =====\n${f.text}`).join("\n\n").slice(0,70000);
+    const prompt=`Convierte documentos existentes de ${HTP_CTX}
+Son documentos vigentes de una misma tarea (instructivo, MIPER y/o evaluación), extraídos de Word o PDF; en los PDF las tablas llegan como texto plano por filas. CONSERVA el contenido y la redacción; solo ordénalo en el formato. No inventes pasos, cifras, equipos ni responsables. Copia el bloque Elaboró/Revisó/Aprobó en "firmasDoc" {"elaboro":{"nombre","cargo","fecha"},"reviso":{...},"aprobo":{...}}.
+Si viene la MIPER, pasa cada fila a "matriz" respetando P, C, controles y responsables. Si viene la evaluación con pauta, copia cada afirmación, su respuesta (V → ok 0, F → ok 1) y su justificación. Si algo no viene, deja ese arreglo vacío.
+
+${AI_RULES}
+
+Devuelve SOLO JSON con esta forma (agrega "firmasDoc"):
+${AI_SHAPE}
+
+DOCUMENTOS:
+${txt}`;
+    try{const r=await S.sample.json(prompt,{modelTier:"complex"});const ai=draftFromAI(r,{codigo:g.draft.codigo,titulo:g.draft.titulo,area:g.draft.area});const d=g.draft;
+      ["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior","tarea","tipoTarea","lugares"].forEach(k=>{if(ai[k]&&!d[k])d[k]=ai[k]});
+      if(r.firmasDoc)d.firmasDoc=ai.firmasDoc;if(!d.secciones.some(s=>s.texto)&&ai.secciones.some(s=>s.texto))d.secciones=ai.secciones;if(!d.matriz.length)d.matriz=ai.matriz;if(!d.preguntasProc.length)d.preguntasProc=ai.preguntasProc;
+      g.files.forEach(f=>{if(!f.ok&&!f.error){f.ok=true;f.msg=f.kind==="miper"?`${d.matriz.length} filas (IA)`:f.kind==="eval"?`${d.preguntasProc.length} afirmaciones (IA)`:`${d.secciones.length} secciones (IA)`}});
+      toast("Documentos ordenados. Revíselos antes de guardar.");this.render()}
+    catch(e){btn.disabled=false;btn.textContent="Ordenar con IA";toast(e.code==="cancelled"?"Cancelado.":errMsg(e))}
+  },
+  async saveAll(btn){
+    const G=Object.values(this.groups);btn.disabled=true;const st=$("#save-st");let ok=0;
+    for(const g of G){const d=g.draft;if(!String(d.codigo||"").trim()||g.code==="SIN-CODIGO"){toast(`Un instructivo no tiene código. Use “Revisar” para completarlo.`);continue}
+      st.textContent=`Guardando ${d.codigo}…`;
+      try{const id=g.base?g.base.id:nid();await S.db.doc(`procedimientos/${id}`).set(procDocFromDraft(d,g.base));ok++;delete this.groups[g.code]}
+      catch(e){toast(`No se pudo guardar ${d.codigo}: ${errMsg(e)}`);break}}
+    toast(`${ok} instructivo${ok===1?"":"s"} guardado${ok===1?"":"s"} en la biblioteca`);
+    if(!Object.keys(this.groups).length)location.hash="#procedimientos";else this.render();
+  }
+});
 
 /* ---------- exportaciones ---------- */
 async function saveFile(filename,data){
