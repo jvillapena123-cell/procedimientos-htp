@@ -234,6 +234,8 @@ input[type=password]{font:inherit;font-size:.93rem;color:var(--ink);background:v
 dialog{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:20px;width:min(760px,calc(100% - 32px));max-height:calc(100% - 32px)}
 dialog::backdrop{background:rgba(10,18,34,.55)}
 dialog ol{margin:0;padding-left:20px}
+.ai-step{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:8px}
+.ai-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700}
 </style>
 </head>
 <body>
@@ -264,12 +266,12 @@ dialog ol{margin:0;padding-left:20px}
 <div id="toast" role="status" hidden></div>
 <dialog id="ai-dlg" aria-labelledby="ai-h"><div class="stack">
   <div><p class="eyebrow">Asistente de redacción</p><h2 id="ai-h">Generar con Claude</h2></div>
-  <ol class="small"><li>Copie la instrucción de abajo.</li><li>Péguela en una conversación nueva de Claude (claude.ai).</li><li>Copie la respuesta completa y péguela en el segundo cuadro.</li></ol>
-  <label class="f">Instrucción para Claude<textarea id="ai-prompt" rows="6" readonly></textarea></label>
-  <div class="row"><button class="btn" id="ai-copy" type="button">Copiar instrucción</button><span class="hint">Si configura la función de IA en Firebase, este paso es automático.</span></div>
-  <label class="f">Respuesta de Claude<textarea id="ai-resp" rows="6" placeholder="Pegue aquí la respuesta completa (JSON)"></textarea></label>
-  <p class="small" id="ai-err" style="color:var(--bad)"></p>
-  <div class="row"><span class="sp"></span><button class="btn" id="ai-cancel" type="button">Cancelar</button><button class="btn primary" id="ai-ok" type="button">Usar respuesta</button></div>
+  <div class="ai-step"><span class="ai-n">1</span><div class="stack" style="gap:6px;flex:1"><b>Abra Claude con la instrucción copiada</b><span class="small">Se abre claude.ai en otra pestaña. Ahí solo pegue (mantener presionado → Pegar, o Ctrl+V) y envíe.</span><button class="btn primary" id="ai-copy" type="button">Copiar y abrir Claude</button></div></div>
+  <div class="ai-step"><span class="ai-n">2</span><div class="stack" style="gap:6px;flex:1"><b>Cuando Claude termine, copie su respuesta y vuelva aquí</b><span class="small">En Claude use el botón de copiar que aparece bajo la respuesta. Luego presione:</span><button class="btn primary" id="ai-paste" type="button">Pegar respuesta de Claude</button>
+    <textarea id="ai-resp" rows="4" placeholder="…o pegue aquí la respuesta de Claude"></textarea>
+    <p class="small" id="ai-err" style="color:var(--bad);margin:0"></p></div></div>
+  <details class="small"><summary>Ver la instrucción</summary><textarea id="ai-prompt" rows="6" readonly style="width:100%;margin-top:6px"></textarea></details>
+  <div class="row"><span class="sp"></span><button class="btn" id="ai-cancel" type="button">Cancelar</button><button class="btn" id="ai-ok" type="button">Usar respuesta</button></div>
 </div></dialog>
 
 
@@ -1886,13 +1888,38 @@ function aiAdapter(){
   }};
 }
 function manualAI(prompt){
+  const full=prompt+"\n\nResponde únicamente con el JSON completo, sin texto adicional ni bloques de código.";
+  const parse=t=>{
+    t=String(t||"").replace(/```(?:json)?/gi,"").replace(/[“”]/g,'"').trim();
+    if(!t)return{err:""};
+    if(t.includes(prompt.slice(0,120))||/\[completar\]/.test(t))return{err:"Eso es la instrucción, no la respuesta. Péguela en Claude (paso 1) y luego copie lo que Claude responda."};
+    const a=t.indexOf("{"),b=t.lastIndexOf("}");
+    if(a<0)return{err:"No se encontró la respuesta de Claude. Use el botón de copiar que aparece bajo la respuesta en Claude."};
+    if(b<a)return{err:"La respuesta llegó cortada. En Claude escriba: «repite el JSON completo» y cópielo de nuevo."};
+    const body=t.slice(a,b+1);
+    for(const c of[body,body.replace(/,\s*([}\]])/g,"$1")]){try{return{json:JSON.parse(c)}}catch{}}
+    return{err:"La respuesta llegó cortada o incompleta. En Claude escriba: «repite el JSON completo» y cópielo de nuevo."};
+  };
   return new Promise((resolve,reject)=>{
-    const dlg=$("#ai-dlg");$("#ai-prompt").value=prompt;$("#ai-resp").value="";$("#ai-err").textContent="";
-    const close=()=>{dlg.close();$("#ai-ok").onclick=null;$("#ai-cancel").onclick=null;dlg.oncancel=null};
-    $("#ai-copy").onclick=async()=>{try{await navigator.clipboard.writeText(prompt);toast("Instrucción copiada. Péguela en Claude.")}catch{$("#ai-prompt").select();toast("Texto seleccionado: cópielo con Ctrl+C")}};
-    $("#ai-ok").onclick=()=>{const t=$("#ai-resp").value;const a=t.indexOf("{"),b=t.lastIndexOf("}");
-      if(a<0||b<a){$("#ai-err").textContent="No se encontró JSON en la respuesta. Copie la respuesta completa de Claude.";return}
-      try{const j=JSON.parse(t.slice(a,b+1));close();resolve(j)}catch{$("#ai-err").textContent="La respuesta está incompleta o tiene un error de formato. Pida a Claude que la repita completa."}};
+    const dlg=$("#ai-dlg"),resp=$("#ai-resp"),err=$("#ai-err");
+    $("#ai-prompt").value=full;resp.value="";err.textContent="";err.style.color="var(--bad)";
+    const close=()=>{dlg.close();["#ai-ok","#ai-cancel","#ai-copy","#ai-paste"].forEach(id=>$(id).onclick=null);resp.oninput=null;dlg.oncancel=null};
+    const tryUse=(auto)=>{const r=parse(resp.value);
+      if(r.json){close();toast("Respuesta cargada.");resolve(r.json);return}
+      err.textContent=r.err||(auto?"":"Primero pegue la respuesta de Claude.")};
+    $("#ai-copy").onclick=()=>{
+      const ta=$("#ai-prompt");let ok=false;
+      try{ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);ok=document.execCommand("copy")}catch{}
+      try{navigator.clipboard&&navigator.clipboard.writeText(full).catch(()=>{})}catch{}
+      window.open("https://claude.ai/new","_blank","noopener");
+      toast(ok?"Instrucción copiada. En Claude, pegue y envíe.":"Abra «Ver la instrucción» y cópiela manualmente.");
+    };
+    $("#ai-paste").onclick=async()=>{
+      try{const t=await navigator.clipboard.readText();resp.value=t;tryUse(false)}
+      catch{resp.focus();err.textContent="Su navegador no permitió pegar con el botón: mantenga presionado el cuadro de abajo y elija Pegar."}
+    };
+    resp.oninput=()=>tryUse(true);
+    $("#ai-ok").onclick=()=>tryUse(false);
     $("#ai-cancel").onclick=()=>{close();reject({code:"cancelled",message:"Generación cancelada."})};
     dlg.oncancel=e=>{e.preventDefault();$("#ai-cancel").click()};
     dlg.showModal();
