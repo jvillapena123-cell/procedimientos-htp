@@ -536,20 +536,21 @@ views.detalle={
     if(!p){el.innerHTML=`<div class="empty"><b>${S.loaded?"Este instructivo no existe o fue eliminado.":"Cargando…"}</b><a href="#procedimientos">Volver a la biblioteca</a></div>`;return}
     const regs=allRegs().filter(r=>r.pid===p.id&&!r.anulado).sort((a,b)=>b.fecha-a.fecha);
     const nq=(p.preguntasProc||[]).length+(p.preguntasMat||[]).length;
-    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`],["rev","Buscar mejoras"]];const needUp=!isHtpFormat(p)||!(p.matriz||[]).length||!(p.preguntasProc||[]).length;if(needUp&&S.canEdit)tabs.push(["upg","Actualizar al formato HTP"]);
+    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`],["rev","Buscar mejoras"]];const needUp=!isHtpFormat(p)||!(p.matriz||[]).length||!(p.preguntasProc||[]).length;if(needUp&&S.canEdit)tabs.push(["upg","Actualizar al formato HTP"]);if(S.canEdit)tabs.push(["ia","Mejorar con IA"]);
     el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / ${esc(p.codigo||"")}</p><h1>${esc(p.titulo)}</h1>
       <p class="lede">Versión ${esc(p.version)} · ${esc(p.proceso||p.area||"")} · Aprobación ${esc(p.aprobacion||80)}% · ${p.estado==="borrador"?'<span class="chip warn">Borrador</span>':'<span class="chip ok">Vigente</span>'}</p></div>
-      <div class="actions">${p.estado!=="borrador"?`<button class="btn primary" id="go-ev">Difundir y evaluar</button>`:""}${S.canEdit?`<a class="btn" href="#editar-${esc(p.id)}">Editar</a><button class="btn" id="dl-word">IT en Word</button><button class="btn" id="dl-eval" ${nq?"":"disabled"}>Evaluación en Word</button>`:""}<a class="btn ghost" href="#mejoras" id="go-mej">Sugerir mejora</a></div></section>
+      <div class="actions">${p.estado!=="borrador"?`<button class="btn primary" id="go-ev">Difundir y evaluar</button>`:""}${S.canEdit?`<button class="btn orange" id="go-ia">Mejorar con IA</button><a class="btn" href="#editar-${esc(p.id)}">Editar</a><button class="btn" id="dl-word">IT en Word</button><button class="btn" id="dl-eval" ${nq?"":"disabled"}>Evaluación en Word</button>`:""}<a class="btn ghost" href="#mejoras" id="go-mej">Sugerir mejora</a></div></section>
       <div class="subtabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-t="${k}" aria-selected="${this.tab===k}">${l}</button>`).join("")}</div>
       <div id="tabc"></div>`;
     $$(".subtabs button",el).forEach(b=>b.onclick=()=>{this.tab=b.dataset.t;this.render(el)});
     $("#go-ev",el)&&($("#go-ev",el).onclick=()=>{S.ev=newEv(p.id);location.hash="#evaluar"});
     $("#dl-word",el)&&($("#dl-word",el).onclick=()=>downloadWord(p));
     $("#dl-eval",el)&&($("#dl-eval",el).onclick=()=>downloadEvalWord(p));
-    $("#go-mej",el).onclick=()=>{S.mejPid=p.id};
+    $("#go-mej",el).onclick=()=>{S.mejPid=p.id};$("#go-ia",el)&&($("#go-ia",el).onclick=()=>{this.tab="ia";this.render(el)});
     const c=$("#tabc",el);
     if(this.tab==="doc")c.innerHTML=(needUp&&S.canEdit?`<div class="ai row" style="margin-bottom:12px"><span class="sp small"><b>Este instructivo no está completo en el formato HTP</b> (${[!isHtpFormat(p)&&"secciones",!(p.matriz||[]).length&&"MIPER",!(p.preguntasProc||[]).length&&"evaluación"].filter(Boolean).join(", ")}).</span><button class="btn sm orange" id="go-upg">Actualizar al formato HTP</button></div>`:"")+`<div class="panel">${docBodyHTML(p)}</div>`;
     $("#go-upg",c)&&($("#go-upg",c).onclick=()=>{this.tab="upg";this.render(el)});
+    if(this.tab==="ia"){c.innerHTML='<div class="panel" id="ia-box"></div>';showMejorarIA(p,$("#ia-box",c));return}
     if(this.tab==="upg"){c.innerHTML='<div class="panel" id="upg-box"></div>';showUpgrade(p,$("#upg-box",c));return}
     if(this.tab==="rev"){c.innerHTML='<div class="panel" id="rev-box"></div>';showRevision(p,$("#rev-box",c));return}
     if(this.tab==="mat")c.innerHTML=`<div class="panel">${matrixHTML(p.matriz,p)}</div>`;
@@ -614,7 +615,8 @@ views.editor={
     const el=this.el,d=S.draft;const inp=(k,lbl,ph="",span="")=>`<label class="f"${span?` style="grid-column:${span}"`:""}>${lbl}<input type="text" id="e-${k.replace(/\W/g,"-")}" data-k="${k}" value="${esc(k.split(".").reduce((o,x)=>o&&o[x],d)??"")}" placeholder="${esc(ph)}"></label>`;
     el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / ${d.id?"Editar":"Nuevo"}</p><h1>${d.id?esc(d.titulo||"Editar instructivo"):"Nuevo instructivo de trabajo"}</h1>
       <p class="lede">Formato HTP: identificación, 13 secciones, MIPER DS 44 y evaluación V/F. Guarde como borrador o publique como vigente.</p></div>
-      <div class="actions"><button class="btn" id="e-word">IT en Word</button><button class="btn" id="e-evw">Evaluación en Word</button>${d.id?'<button class="btn danger" id="e-del">Eliminar</button>':""}<button class="btn primary" id="e-save">Guardar</button></div></section>
+      <div class="actions"><button class="btn orange" id="e-ia">Mejorar con IA</button><button class="btn" id="e-word">IT en Word</button><button class="btn" id="e-evw">Evaluación en Word</button>${d.id?'<button class="btn danger" id="e-del">Eliminar</button>':""}<button class="btn primary" id="e-save">Guardar</button></div></section>
+    <div class="panel" id="ed-ia" hidden style="margin-bottom:16px"></div>
     <div class="stack" id="ed">
       <section class="panel ai"><h2>Importar desde Word</h2>
         <p class="small" style="margin-bottom:10px">Suba los .docx con el formato HTP: el instructivo (IT), la MIPER y la evaluación. Puede subir uno o los tres juntos. La app los lee y llena este formulario; revise antes de guardar.</p>
@@ -665,6 +667,7 @@ views.editor={
     $("#e-file",el).onchange=async e=>{const f=e.target.files[0];if(!f||!S.assets)return;toast("Subiendo archivo…");try{const r=await S.assets.upload(f);d.docAssetId=r.id;d.docNombre=f.name;d.docUrl=FB?r.url:null;this.render();toast("Archivo cargado. Recuerde guardar.")}catch(err){toast(errMsg(err))}};
     $("#e-rmdoc",el)&&($("#e-rmdoc",el).onclick=()=>{d.docAssetId=null;d.docNombre=null;d.docUrl=null;this.render()});
     $("#e-word",el).onclick=()=>downloadWord(this.snapshot());
+    $("#e-ia",el).onclick=()=>{const bx=$("#ed-ia");bx.hidden=false;showMejorarIA(Object.assign(this.snapshot(),d.id?{id:d.id}:{}),bx);bx.scrollIntoView({behavior:"smooth",block:"start"})};
     $("#e-evw",el).onclick=()=>downloadEvalWord(this.snapshot());
     $("#ai-q",el).onclick=()=>this.aiQuestions();
     $("#e-save",el).onclick=()=>this.save();
@@ -1359,6 +1362,79 @@ ${src}`;
   paint();
 }
 
+/* ---------- mejorar con IA: propuesta de versión mejorada con aceptación por sección ---------- */
+function snippet(t,n=220){t=String(t||"").replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n)+"…":t}
+function showMejorarIA(p,box,opts={}){
+  const base=Object.assign(blankProc(),clone(p));base.firmasDoc=withFirmas(base);base.matriz=(base.matriz||[]).map(normRow);
+  if(!isHtpFormat(base)){const m=mapToHtp((p._orig&&p._orig.length?p._orig:base.secciones)||[]);base.secciones=m.map(s=>({titulo:s.titulo,texto:String(s.texto).trim()||"[completar]"}))}
+  const hall=opts.hallazgos||[];let prop=null,cambios=[],resumen="";const acc={};
+  const intro=()=>{box.innerHTML=`<div class="stack"><div class="row"><h3 class="sp">Mejorar con IA · ${esc(base.codigo||base.titulo||"")}</h3></div>
+    <p class="small">La IA revisa el instructivo, su MIPER y su evaluación, y propone una versión mejorada en el formato HTP. Usted ve cada cambio y decide cuáles aceptar. Nada se guarda hasta que lo apruebe en el editor.</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+      ${[["redaccion","Redacción más clara para el trabajador de terreno",true],["pasos","Pasos concretos y verificables en 8. Desarrollo de la actividad",true],["controles","Controles según la jerarquía del DS 44 y coherencia IT ↔ MIPER",true],["miper","Completar la MIPER con los peligros que falten",true],["evaluacion","Revisar o completar la evaluación (10 V/F + pauta)",true],["completar","Completar secciones vacías o “[completar]” cuando se pueda deducir",true]]
+        .map(([k,l,on])=>`<label class="check"><input type="checkbox" data-opt="${k}" ${on?"checked":""}><span>${l}</span></label>`).join("")}</div>
+    ${hall.length?`<p class="small"><b>Se aplicarán además ${hall.length} observaciones</b> encontradas en “Buscar mejoras”.</p>`:""}
+    <label class="f">Indicaciones adicionales (opcional)<textarea id="ia-extra" rows="2" placeholder="Ej.: incluir uso de radio canal 3; velocidad máxima en patio 10 km/h"></textarea></label>
+    <div class="row"><button class="btn orange" id="ia-go" ${S.sample?"":"disabled"}>Mejorar con IA</button><span class="small muted" id="ia-st"></span></div>
+    ${S.sample?"":'<p class="hint">La IA no está disponible en esta vista.</p>'}</div>`;
+    $("#ia-go",box).onclick=run;};
+  const run=async()=>{
+    const op={};$$("[data-opt]",box).forEach(c=>op[c.dataset.opt]=c.checked);const extra=$("#ia-extra",box).value.trim();
+    const b=$("#ia-go",box),st=$("#ia-st",box);b.disabled=true;b.innerHTML='<span class="spin"></span> Mejorando…';const t0=Date.now();const tick=setInterval(()=>st.textContent=`${Math.round((Date.now()-t0)/1000)} s`,1000);
+    const prompt=`Eres especialista en prevención de riesgos, calidad (ISO 9001, ISO 45001) y operaciones portuarias en Chile. Trabajas para ${HTP_CTX}
+Mejora este instructivo de trabajo, su MIPER y su evaluación. Mantén el sentido operativo y los datos técnicos del original (velocidades, distancias, cargos, códigos): NO inventes cifras, equipos ni nombres; si una mejora requiere un dato que no está, escribe "[completar: ...]".
+Mejoras pedidas:
+${op.redaccion?"- Redacción clara, directa y en voz activa para el trabajador de terreno; sin ambigüedades.\n":""}${op.pasos?"- En 8. Desarrollo de la actividad, pasos concretos, verificables y en orden, con responsable.\n":""}${op.controles?"- Controles según la jerarquía DS 44 (eliminación, sustitución, ingeniería, administrativa, EPP); cada control de la MIPER debe estar en la IT y viceversa; riesgos Importantes o Intolerables con al menos un control de mayor jerarquía que el EPP.\n":""}${op.miper?"- MIPER completa: agrega filas para peligros de la tarea que falten; ajusta la evaluación residual a los controles reales.\n":"- No modifiques la MIPER: devuélvela igual.\n"}${op.evaluacion?"- Evaluación: 10 afirmaciones V/F del instructivo y 5 de la MIPER, claras, sin ambigüedad, cubriendo los riesgos críticos, con justificación citando el paso o sección. Conserva las buenas.\n":"- No modifiques la evaluación: devuélvela igual.\n"}${op.completar?"- Completa secciones vacías o con “[completar]” solo cuando el contenido se pueda deducir del propio instructivo.\n":""}${hall.length?"- Resuelve estas observaciones de la revisión:\n"+hall.map(h=>`  · [${h.prioridad}] ${h.seccion}: ${h.hallazgo} → ${h.propuesta}`).join("\n")+"\n":""}${extra?"- Indicaciones del Jefe de Operaciones: "+extra+"\n":""}
+Además devuelve "cambios": lista de los cambios hechos [{"seccion":"","cambio":"qué cambió y por qué, en una frase"}].
+
+${AI_RULES}
+
+Devuelve SOLO JSON con esta forma (agrega "cambios" y "resumen" con 1-2 frases):
+${AI_SHAPE}
+
+INSTRUCTIVO ACTUAL ${base.codigo} — ${base.titulo} (versión ${base.version})
+Proceso: ${base.proceso} · Subproceso: ${base.subproceso} · Actividad: ${base.actividad}
+${base.secciones.map(s=>s.titulo+"\n"+s.texto).join("\n\n").slice(0,40000)}
+
+MIPER ACTUAL:
+${base.matriz.map((r,i)=>`${i+1}. Etapa: ${r.etapa} | Puestos: ${r.puestos} | Peligro: ${r.peligro} | Riesgo: ${r.riesgo} | Daño: ${r.dano} | Inicial P${r.p??"-"} C${r.c??"-"} ${r.evalIni||""} | Controles: ${r.control} | Residual P${r.pr??"-"} C${r.cr??"-"} ${r.evalRes||""} | Responsable: ${r.responsable}`).join("\n").slice(0,18000)||"(sin MIPER)"}
+
+EVALUACIÓN ACTUAL:
+${(base.preguntasProc||[]).map((q,i)=>`${i+1}. ${q.q} → ${q.tipo==="vf"?(q.ok?"F":"V"):"abcd"[q.ok]} | ${q.just||""}`).join("\n")||"(sin evaluación)"}`;
+    try{const r=await S.sample.json(prompt,{modelTier:"complex"});clearInterval(tick);
+      prop=draftFromAI(r,{codigo:base.codigo,titulo:base.titulo,area:base.area});
+      cambios=(Array.isArray(r.cambios)?r.cambios:[]).filter(c=>c&&c.cambio);resumen=String(r.resumen||"");
+      base.secciones.forEach((s,i)=>{const n=prop.secciones[i];acc["s"+i]=!!(n&&String(n.texto).trim()&&n.texto.trim()!==String(s.texto).trim())});
+      acc.miper=op.miper&&prop.matriz.length>0;acc.eval=op.evaluacion&&prop.preguntasProc.length>0;acc.ident=true;
+      review()}
+    catch(e){clearInterval(tick);st.textContent="";b.disabled=false;b.textContent="Mejorar con IA";toast(e.code==="cancelled"?"Cancelado.":e.code==="not_granted"?"No se autorizó el uso de IA.":e.code==="rate_limited"?"Límite de uso alcanzado. Intente más tarde.":errMsg(e))}
+  };
+  const result=()=>{const d=clone(base);
+    base.secciones.forEach((s,i)=>{if(acc["s"+i]&&prop.secciones[i])d.secciones[i]={titulo:s.titulo,texto:prop.secciones[i].texto}});
+    if(acc.miper)d.matriz=prop.matriz.map(normRow);if(acc.eval){d.preguntasProc=prop.preguntasProc;d.preguntasMat=prop.preguntasMat}
+    if(acc.ident)["proceso","subproceso","actividad","tarea","tipoTarea","lugares"].forEach(k=>{if(!d[k]&&prop[k])d[k]=prop[k]});
+    return d};
+  const review=()=>{
+    const rows=base.secciones.map((s,i)=>{const n=prop.secciones[i];const changed=n&&String(n.texto).trim()&&n.texto.trim()!==String(s.texto).trim();
+      return`<tr><td><label class="row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" data-acc="s${i}" ${acc["s"+i]?"checked":""} ${changed?"":"disabled"}><b class="small">${esc(s.titulo)}</b></label></td><td class="small muted">${changed?esc(snippet(s.texto)):"—"}</td><td class="small">${changed?esc(snippet(n.texto)):'<span class="muted">Sin cambios</span>'}</td></tr>`}).join("");
+    box.innerHTML=`<div class="stack"><div class="row"><h3 class="sp">Propuesta de mejora · ${esc(base.codigo||"")}</h3><button class="btn ghost" id="ia-back">Volver a opciones</button></div>
+    ${resumen?`<p>${esc(resumen)}</p>`:""}
+    ${cambios.length?`<details open><summary class="small" style="cursor:pointer;font-weight:600">${cambios.length} cambios realizados</summary><ul class="small" style="padding-left:18px">${cambios.map(c=>`<li><b>${esc(c.seccion)}</b>: ${esc(c.cambio)}</li>`).join("")}</ul></details>`:""}
+    <div class="tbl-wrap"><table><thead><tr><th>Aceptar</th><th>Antes</th><th>Propuesta</th></tr></thead><tbody>${rows}
+      <tr><td><label class="row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" data-acc="miper" ${acc.miper?"checked":""} ${prop.matriz.length?"":"disabled"}><b class="small">MIPER</b></label></td><td class="small muted">${base.matriz.length} filas</td><td class="small">${prop.matriz.length} filas propuestas</td></tr>
+      <tr><td><label class="row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" data-acc="eval" ${acc.eval?"checked":""} ${prop.preguntasProc.length?"":"disabled"}><b class="small">Evaluación</b></label></td><td class="small muted">${(base.preguntasProc||[]).length} afirmaciones</td><td class="small">${prop.preguntasProc.length} + ${prop.preguntasMat.length} (MIPER) propuestas</td></tr>
+    </tbody></table></div>
+    <div class="row"><button class="btn primary" id="ia-open">Aplicar lo marcado y abrir en el editor</button><button class="btn" id="ia-word">Descargar IT mejorada (Word)</button><button class="btn" id="ia-evw">Evaluación mejorada (Word)</button></div>
+    <p class="hint">Revise la propuesta en el editor antes de guardar. Si cambió contenido técnico, considere subir la versión del documento.</p></div>`;
+    $$("[data-acc]",box).forEach(c=>c.onchange=()=>acc[c.dataset.acc]=c.checked);
+    $("#ia-back",box).onclick=intro;
+    $("#ia-open",box).onclick=()=>{S.draft=Object.assign(result(),p.id?{id:p.id}:{});delete S.draft._orig;opts.onOpen&&opts.onOpen();toast("Propuesta aplicada en el editor. Revise y guarde.");const tg=p.id?"#editar-"+p.id:"#nuevo";if(location.hash===tg)route();else location.hash=tg};
+    $("#ia-word",box).onclick=()=>downloadWord(result());
+    $("#ia-evw",box).onclick=()=>downloadEvalWord(result());
+  };
+  intro();
+}
+
 /* ---------- carga simple: subir Word o PDF → lista → buscar mejoras ---------- */
 async function readPdfText(file){
   if(!window.pdfjsLib)throw{message:"No se pudo cargar el lector de PDF. Recargue la página."};
@@ -1455,9 +1531,10 @@ async function sendToMejoras(p,items){
 }
 function showRevision(p,box){
   let list=quickChecks(p),resumen="",origen="Chequeos automáticos del formato HTP, DS 44 y evaluación.";
-  const paint=()=>{box.innerHTML=`<div class="stack"><div class="row"><h3 class="sp">Buscar mejoras · ${esc(p.codigo||p.titulo||"")}</h3><button class="btn orange" id="rv-ai" ${S.sample?"":"disabled"}>Análisis profundo con IA</button></div>${revisionHTML(p,list,resumen,origen)}</div>`;
+  const paint=()=>{box.innerHTML=`<div class="stack"><div class="row"><h3 class="sp">Buscar mejoras · ${esc(p.codigo||p.titulo||"")}</h3><button class="btn" id="rv-ai" ${S.sample?"":"disabled"}>Análisis profundo con IA</button>${S.canEdit&&list.length?`<button class="btn orange" id="rv-fix" ${S.sample?"":"disabled"}>Mejorar con IA aplicando estas observaciones</button>`:""}</div>${revisionHTML(p,list,resumen,origen)}</div>`;
     $$("[data-send]",box).forEach(b=>b.onclick=async()=>{b.disabled=true;try{const L=list.slice().sort((a,b)=>({Alta:0,Media:1,Baja:2}[a.prioridad]??3)-({Alta:0,Media:1,Baja:2}[b.prioridad]??3));await sendToMejoras(p,[L[+b.dataset.send]]);b.textContent="Enviada ✓"}catch(e){b.disabled=false;toast(errMsg(e))}});
     $("#rv-all",box)&&($("#rv-all",box).onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{await sendToMejoras(p,list);toast(`${list.length} mejoras enviadas a la bandeja`);b.textContent="Enviadas ✓"}catch(err){b.disabled=false;toast(errMsg(err))}});
+    $("#rv-fix",box)&&($("#rv-fix",box).onclick=()=>showMejorarIA(p,box,{hallazgos:list}));
     $("#rv-ai",box).onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.innerHTML='<span class="spin"></span> Analizando…';
       const prompt=`Eres auditor de seguridad y calidad (ISO 9001, ISO 45001, DS 44 y Guía ISP) en ${HTP_CTX}
 Revisa este instructivo de trabajo, su MIPER y su evaluación, y entrega hasta 12 oportunidades de mejora concretas y accionables, priorizadas. Revisa en especial:
@@ -1523,7 +1600,7 @@ Object.assign(views.cargar,{
       <td>${chip(g,"it")}</td><td>${chip(g,"miper")}</td><td>${chip(g,"eval")}</td>
       <td>${isHtpFormat(d)&&d.matriz.length&&(d.preguntasProc||[]).length?'<span class="chip ok">✓ Formato HTP</span>':`<button class="btn sm orange" data-up="${esc(g.code)}">Actualizar al formato HTP</button>`}</td>
       <td><select data-est="${esc(g.code)}" style="width:auto"><option value="vigente"${d.estado!=="borrador"?" selected":""}>Vigente</option><option value="borrador"${d.estado==="borrador"?" selected":""}>Borrador</option></select></td>
-      <td><div class="row" style="flex-wrap:nowrap">${needAI?`<button class="btn sm orange" data-ai="${esc(g.code)}">Ordenar con IA</button>`:""}<button class="btn sm" data-rev="${esc(g.code)}">Buscar mejoras</button><button class="btn sm" data-ed="${esc(g.code)}">Revisar</button><button class="btn sm ghost" data-rm="${esc(g.code)}">Quitar</button></div></td></tr>`}).join("")}
+      <td><div class="row" style="flex-wrap:nowrap">${needAI?`<button class="btn sm orange" data-ai="${esc(g.code)}">Ordenar con IA</button>`:""}<button class="btn sm orange" data-mia="${esc(g.code)}">Mejorar con IA</button><button class="btn sm" data-rev="${esc(g.code)}">Buscar mejoras</button><button class="btn sm" data-ed="${esc(g.code)}">Revisar</button><button class="btn sm ghost" data-rm="${esc(g.code)}">Quitar</button></div></td></tr>`}).join("")}
     </tbody></table></div>
     <div class="row" style="margin-top:12px"><button class="btn primary" id="save-all">Guardar ${G.length} en la biblioteca</button><span class="small muted" id="save-st">Puede revisar cada uno antes o guardarlos directamente.</span></div>`;
     $$("[data-est]",box).forEach(s=>s.onchange=()=>{this.groups[s.dataset.est].draft.estado=s.value});
@@ -1531,6 +1608,7 @@ Object.assign(views.cargar,{
     $$("[data-ed]",box).forEach(b=>b.onclick=()=>{const g=this.groups[b.dataset.ed];S.draft=Object.assign(clone(g.draft),g.base?{id:g.base.id}:{});delete this.groups[b.dataset.ed];location.hash=g.base?"#editar-"+g.base.id:"#nuevo"});
     $$("[data-rev]",box).forEach(b=>b.onclick=()=>{const g=this.groups[b.dataset.rev];const rv=$("#rev");rv.className="panel";showRevision(Object.assign({},g.draft,g.base?{id:g.base.id}:{}),rv);rv.scrollIntoView({behavior:"smooth",block:"start"})});
     $$("[data-ai]",box).forEach(b=>b.onclick=()=>this.aiGroup(b.dataset.ai,b));
+    $$("[data-mia]",box).forEach(b=>b.onclick=()=>{const code=b.dataset.mia;const g=this.groups[code];const rv=$("#rev");rv.className="panel";showMejorarIA(Object.assign({},g.draft,g.base?{id:g.base.id}:{}),rv,{onOpen:()=>{delete this.groups[code]}});rv.scrollIntoView({behavior:"smooth",block:"start"})});
     $$("[data-up]",box).forEach(b=>b.onclick=()=>{const code=b.dataset.up;const g=this.groups[code];const rv=$("#rev");rv.className="panel";showUpgrade(Object.assign({},g.draft,g.base?{id:g.base.id}:{}),rv,{onOpen:()=>{delete this.groups[code]}});rv.scrollIntoView({behavior:"smooth",block:"start"})});
     $("#save-all",box).onclick=e=>this.saveAll(e.currentTarget);
   },
