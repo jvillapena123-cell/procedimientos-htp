@@ -216,6 +216,13 @@ table.dt td{font-size:.85rem}
 .vfrow label{border:1px solid var(--line);min-width:150px}
 .drop{border:2px dashed var(--line);padding-block:28px}
 .drop.over{border-color:var(--accent);background:var(--info-bg)}
+.lib th{white-space:normal}
+.lib th.grp{text-align:center}
+.lib th.g-it{box-shadow:inset 0 3px 0 var(--accent)}
+.lib th.g-mx{box-shadow:inset 0 3px 0 var(--orange)}
+.lib td.lib-name{min-width:220px}
+.lib td.lib-name a{color:var(--ink);text-decoration:none}
+.lib td.lib-name a:hover{text-decoration:underline}
 .sigs{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 
 body:not(.authok) nav.tabs{display:none}
@@ -529,7 +536,7 @@ function qsHTML(arr,showKey){
 /* ---------- vista: detalle ---------- */
 views.detalle={
   tab:"doc",
-  mount(el,id){this.id=id;this.tab="doc";this.render(el)},
+  mount(el,id){this.id=id;this.tab=this._next||"doc";this._next=null;this.render(el)},
   update(){this.render($("#view"))},
   render(el){
     const p=procById(this.id);
@@ -783,8 +790,8 @@ ${g.ideas}`;
 };
 
 /* ---------- vista: evaluar ---------- */
-function newEv(pid){return{pid:pid||"",modo:"completa",step:0,w:{nombre:"",rut:"",cargo:"",empresa:"HTP",turno:TURNOS[0],relator:S.me&&S.me.name||""},procLeido:false,matLeida:false,ansP:{},ansM:{},resP:null,resM:null,intentosP:1,intentosM:1,saved:false}}
-function evSteps(ev,p){const s=["Trabajador","Instructivo","MIPER"];if(ev.modo==="completa"){if((p?.preguntasProc||[]).length)s.push("Evaluación IT");if((p?.preguntasMat||[]).length)s.push("Evaluación MIPER")}s.push("Firma");return s}
+function newEv(pid,scope,modo){return{pid:pid||"",scope:scope||"all",modo:modo||"completa",step:0,w:{nombre:"",rut:"",cargo:"",empresa:"HTP",turno:TURNOS[0],relator:S.me&&S.me.name||""},procLeido:false,matLeida:false,ansP:{},ansM:{},resP:null,resM:null,intentosP:1,intentosM:1,saved:false}}
+function evSteps(ev,p){const it=ev.scope!=="miper",mx=ev.scope!=="it";const s=["Trabajador"];if(it)s.push("Instructivo");if(mx)s.push("MIPER");if(ev.modo==="completa"){if(it&&(p?.preguntasProc||[]).length)s.push("Evaluación IT");if(mx&&(p?.preguntasMat||[]).length)s.push("Evaluación MIPER")}s.push("Firma");return s}
 views.evaluar={
   mount(el){S.ev??=newEv();this.el=el;this.render()},
   update(){const ev=S.ev;if(ev&&ev.step===0&&!$("#view input:focus, #view select:focus"))this.render()},
@@ -793,8 +800,8 @@ views.evaluar={
     if(ev.saved){el.innerHTML=`<section class="panel stack" style="max-width:640px"><p class="eyebrow">Registro guardado</p><h1>Firma registrada</h1>
       <p>${esc(ev.w.nombre)} quedó registrado en <b>${esc(p?.codigo||"")} ${esc(p?.titulo||"")}</b>.</p>${resultChips(ev.savedReg)}
       <div class="row"><button class="btn primary" id="next-w">Registrar otro trabajador en este instructivo</button><a class="btn" href="#dashboard">Ver dashboard</a></div></section>`;
-      $("#next-w",el).onclick=()=>{const prev=ev;S.ev=newEv(prev.pid);S.ev.modo=prev.modo;S.ev.w.relator=prev.w.relator;S.ev.w.turno=prev.w.turno;this.render()};return}
-    const head=`<section class="pagehead"><div><p class="eyebrow">Difusión y evaluación</p><h1>${p?esc(p.titulo):"Registrar difusión"}</h1>${p?`<p class="lede code">${esc(p.codigo)} · Versión ${esc(p.version)}</p>`:""}</div></section>
+      $("#next-w",el).onclick=()=>{const prev=ev;S.ev=newEv(prev.pid,prev.scope,prev.modo);S.ev.w.relator=prev.w.relator;S.ev.w.turno=prev.w.turno;this.render()};return}
+    const head=`<section class="pagehead"><div><p class="eyebrow">Difusión y evaluación</p><h1>${p?esc(p.titulo):"Registrar difusión"}</h1>${p?`<p class="lede"><span class="code">${esc(p.codigo)} · Versión ${esc(p.version)}</span> · <b>${ev.modo==="completa"?"Evaluación":"Difusión"}${ev.scope==="it"?" del instructivo":ev.scope==="miper"?" de la MIPER":" de IT y MIPER"}</b></p>`:""}</div></section>
       <div class="steps">${steps.map((s,i)=>`<span class="${i<ev.step?"done":i===ev.step?"cur":""}">${s}</span>`).join("")}</div>`;
     if(!S.db){el.innerHTML=head+`<div class="empty"><b>Sin conexión a la base de datos.</b>Inicie sesión para registrar firmas.</div>`;return}
     let body="";
@@ -805,6 +812,7 @@ views.evaluar={
         ${!vig.length?`<p class="hint">${S.loaded?"No hay instructivos vigentes.":"Cargando instructivos…"}</p>`:""}
         <div class="row"><label class="check" style="flex:1;min-width:220px"><input type="radio" name="modo" value="completa" ${ev.modo==="completa"?"checked":""}><span><b>Difusión y evaluación</b><br><span class="hint">Lectura, prueba y firma</span></span></label>
         <label class="check" style="flex:1;min-width:220px"><input type="radio" name="modo" value="difusion" ${ev.modo==="difusion"?"checked":""}><span><b>Solo difusión</b><br><span class="hint">Charla o VIT, con firma</span></span></label></div>
+        <div class="row"><span class="small" style="font-weight:600">Qué se difunde:</span>${[["all","Instructivo y MIPER"],["it","Solo instructivo (IT)"],["miper","Solo MIPER"]].map(([v,l])=>`<label class="row" style="gap:6px"><input type="radio" name="scope" value="${v}" ${ev.scope===v?"checked":""}>${l}</label>`).join("")}</div>
         <h3>Datos del evaluado</h3>
         <div class="grid">
           <label class="f" style="grid-column:span 2">Nombre<input type="text" id="ev-n" data-k="w.nombre" list="dl-pers" value="${esc(ev.w.nombre)}" autocomplete="off"></label>
@@ -853,7 +861,8 @@ views.evaluar={
       bindInputs($("#evf",el),ev,(k)=>{if(k==="pid"){ev.procLeido=false;ev.matLeida=false;ev.ansP={};ev.ansM={};ev.resP=ev.resM=null;this.render();return}
         if(k==="w.nombre"){const m=activos().find(x=>x.nombre===ev.w.nombre);if(m){ev.w.rut=fmtRut(m.rut);ev.w.cargo=m.cargo||"";ev.w.empresa=m.empresa||"";if(m.turno&&TURNOS.includes(m.turno))ev.w.turno=m.turno;$("#ev-r").value=ev.w.rut;$("#ev-c").value=ev.w.cargo;$("#ev-e").value=ev.w.empresa;$("#ev-t").value=ev.w.turno;rh()}}
         if(k==="w.rut")rh()});
-      $$('input[name="modo"]',el).forEach(r=>r.onchange=()=>{ev.modo=r.value;this.render()});rh();
+      $$('input[name="modo"]',el).forEach(r=>r.onchange=()=>{ev.modo=r.value;this.render()});
+      $$('input[name="scope"]',el).forEach(r=>r.onchange=()=>{ev.scope=r.value;this.render()});rh();
     }
     if(st==="Instructivo")$("#ck-p",el).onchange=e=>ev.procLeido=e.target.checked;
     if(st==="MIPER")$("#ck-m",el).onchange=e=>ev.matLeida=e.target.checked;
@@ -1434,6 +1443,38 @@ ${(base.preguntasProc||[]).map((q,i)=>`${i+1}. ${q.q} → ${q.tipo==="vf"?(q.ok?
   };
   intro();
 }
+
+/* ---------- biblioteca en tabla: IT y MIPER con difundir / evaluar ---------- */
+Object.assign(views.procedimientos,{
+  update(){
+    const el=$("#view");const q=($("#q",el)?.value||"").toLowerCase();const fa=$("#fa",el)?.value||"";const map=coverage();const N=activos().length;
+    let list=S.procs.filter(p=>(S.canEdit||p.estado!=="borrador")&&(!fa||p.area===fa)&&(!q||(p.codigo+" "+p.titulo).toLowerCase().includes(q)));
+    list.sort((a,b)=>String(a.codigo).localeCompare(String(b.codigo)));
+    const box=$('[data-slot="list"]',el);
+    if(!list.length){box.innerHTML=`<div class="empty"><b>${S.procs.length?"Ningún instructivo coincide con la búsqueda.":S.loaded?"La biblioteca está vacía.":"Cargando instructivos…"}</b>${!S.procs.length&&S.canEdit?'Súbalos desde <a href="#cargar">Cargar</a> con el Word o PDF de la IT y su MIPER.':""}</div>`;return}
+    const cnt=(v)=>`<b>${N?pct(v,N)+"%":v}</b>`;
+    box.innerHTML=`<div class="tbl-wrap"><table class="lib"><thead>
+      <tr><th rowspan="2">Instructivo</th><th colspan="3" class="grp g-it">Instructivo de trabajo (IT)</th><th colspan="3" class="grp g-mx">Matriz MIPER</th><th rowspan="2"></th></tr>
+      <tr><th class="g-it">Estado</th><th class="g-it num">Difundido · Evaluado</th><th class="g-it">Acciones</th><th class="g-mx">Estado</th><th class="g-mx num">Difundida · Evaluada</th><th class="g-mx">Acciones</th></tr></thead><tbody>
+    ${list.map(p=>{const c=procCounts(map,p.id);const vig=p.estado!=="borrador";
+      const hasIT=(p.secciones||[]).some(s=>String(s.texto).trim().length>20&&!/^\[completar/i.test(String(s.texto).trim()));const nQP=(p.preguntasProc||[]).length;
+      const hasMX=(p.matriz||[]).length>0;const nQM=(p.preguntasMat||[]).length;
+      const btn=(lbl,scope,modo,ok,why)=>`<button class="btn sm${modo==="completa"?" primary":""}" data-go="${esc(p.id)}|${scope}|${modo}" ${ok&&vig?"":"disabled"} title="${esc(!vig?"Publique el instructivo como Vigente para difundirlo":ok?"":why)}">${lbl}</button>`;
+      return`<tr>
+        <td class="lib-name" data-open="${esc(p.id)}"><a href="#p-${esc(p.id)}"><b>${esc(p.titulo||p.codigo||"Sin título")}</b></a><div class="small muted"><span class="code">${esc(p.codigo||"—")} · v${esc(p.version)}</span> ${vig?'<span class="chip ok">Vigente</span>':'<span class="chip warn">Borrador</span>'}</div></td>
+        <td class="g-it">${hasIT?`<span class="chip ok">✓ Cargada</span><div class="small muted">${nQP?nQP+" preguntas":"sin evaluación"}</div>`:'<span class="chip bad">✗ No cargada</span>'}</td>
+        <td class="g-it num">${cnt(c.pd)} · ${cnt(c.pe)}</td>
+        <td class="g-it"><div class="row" style="flex-wrap:nowrap">${btn("Difundir","it","difusion",hasIT,"La IT no está cargada")}${btn("Evaluar","it","completa",hasIT&&nQP>0,hasIT?"La IT no tiene preguntas de evaluación":"La IT no está cargada")}</div></td>
+        <td class="g-mx">${hasMX?`<span class="chip ok">✓ ${p.matriz.length} filas</span><div class="small muted">${nQM?nQM+" preguntas":"sin evaluación"}</div>`:'<span class="chip bad">✗ No cargada</span>'}</td>
+        <td class="g-mx num">${cnt(c.md)} · ${cnt(c.me)}</td>
+        <td class="g-mx"><div class="row" style="flex-wrap:nowrap">${btn("Difundir","miper","difusion",hasMX,"La MIPER no está cargada")}${btn("Evaluar","miper","completa",hasMX&&nQM>0,hasMX?"La MIPER no tiene preguntas de evaluación":"La MIPER no está cargada")}</div></td>
+        <td><div class="row" style="flex-wrap:nowrap"><a class="btn sm ghost" href="#p-${esc(p.id)}">Ver</a>${S.canEdit&&(!hasIT||!hasMX||!nQP)?`<a class="btn sm orange" href="#p-${esc(p.id)}" data-fix="${esc(p.id)}">Completar</a>`:""}</div></td></tr>`}).join("")}
+    </tbody></table></div>
+    <p class="hint" style="margin-top:8px">${N?`Porcentajes sobre ${N} trabajadores activos de la nómina.`:"Cantidad de trabajadores. Cargue la nómina en Personal para ver porcentajes."} “Evaluar” incluye la lectura, la prueba y la firma; “Difundir” registra solo la lectura con firma.</p>`;
+    $$("[data-go]",box).forEach(b=>b.onclick=()=>{const[id,scope,modo]=b.dataset.go.split("|");S.ev=newEv(id,scope,modo);location.hash="#evaluar"});
+    $$("[data-fix]",box).forEach(b=>b.onclick=()=>{views.detalle._next="upg"});
+  }
+});
 
 /* ---------- carga simple: subir Word o PDF → lista → buscar mejoras ---------- */
 async function readPdfText(file){
