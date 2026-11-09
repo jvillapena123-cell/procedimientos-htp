@@ -3,12 +3,12 @@
 // Estos valores identifican el proyecto; la seguridad la dan las reglas (firestore.rules y storage.rules).
 window.HTP_CONFIG = {
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyDyqgycHPypFhEgCyhPIPXbZ9f-mOfqx08",
+    authDomain: "htp-procedimientos.firebaseapp.com",
+    projectId: "htp-procedimientos",
+    storageBucket: "htp-procedimientos.firebasestorage.app",
+    messagingSenderId: "849345809628",
+    appId: "1:849345809628:web:76408cea0fd32d71e1b819"
   },
 
   // Adjuntar PDF originales. Requiere activar Storage en Firebase (plan Blaze) y desplegar storage.rules.
