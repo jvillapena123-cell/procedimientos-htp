@@ -266,6 +266,7 @@ dialog ol{margin:0;padding-left:20px}
 <div id="toast" role="status" hidden></div>
 <dialog id="ai-dlg" aria-labelledby="ai-h"><div class="stack">
   <div><p class="eyebrow">Asistente de redacción</p><h2 id="ai-h">Generar con Claude</h2></div>
+  <p class="small" id="ai-note" hidden style="background:var(--warn-bg);color:var(--warn);padding:8px 10px;border-radius:6px;margin:0"></p>
   <div class="ai-step"><span class="ai-n">1</span><div class="stack" style="gap:6px;flex:1"><b>Abra Claude con la instrucción copiada</b><span class="small">Se abre claude.ai en otra pestaña. Ahí solo pegue (mantener presionado → Pegar, o Ctrl+V) y envíe.</span><button class="btn primary" id="ai-copy" type="button">Copiar y abrir Claude</button></div></div>
   <div class="ai-step"><span class="ai-n">2</span><div class="stack" style="gap:6px;flex:1"><b>Cuando Claude termine, copie su respuesta y vuelva aquí</b><span class="small">En Claude use el botón de copiar que aparece bajo la respuesta. Luego presione:</span><button class="btn primary" id="ai-paste" type="button">Pegar respuesta de Claude</button>
     <textarea id="ai-resp" rows="4" placeholder="…o pegue aquí la respuesta de Claude"></textarea>
@@ -1884,10 +1885,42 @@ function aiAdapter(){
       try{const fn=firebase.app().functions(CFG.regionIA||"us-central1").httpsCallable(CFG.funcionIA,{timeout:540000});const r=await fn({prompt,nivel:opts.modelTier||"default"});return r.data}
       catch(e){throw{code:e.code==="functions/resource-exhausted"||e.code==="resource-exhausted"?"rate_limited":e.code==="functions/permission-denied"||e.code==="permission-denied"?"not_granted":"error",message:e.message}}
     }
+    if(CFG.iaGratis!==false&&!S.geminiOff){
+      try{return await geminiJSON(prompt)}
+      catch(e){
+        if(e.code==="parse"){toast("La IA respondió incompleto. Reintente o use el modo manual.");}
+        else{S.geminiOff=true;S.geminiErr=e.message||"";}
+        return manualAI(prompt,e.code==="parse"?"":"La IA automática gratuita no está activa todavía ("+(e.short||"falta activar Firebase AI Logic")+"). Mientras tanto puede usar este modo manual.");
+      }
+    }
     return manualAI(prompt);
   }};
 }
-function manualAI(prompt){
+let _gem=null;
+async function geminiModel(name){
+  const V="13.1.0";
+  const appM=await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+  const aiM=await import(`https://www.gstatic.com/firebasejs/${V}/firebase-ai.js`);
+  const app=appM.getApps().find(a=>a.name==="ia")||appM.initializeApp(CFG.firebase,"ia");
+  const ai=aiM.getAI(app,{backend:new aiM.GoogleAIBackend()});
+  return aiM.getGenerativeModel(ai,{model:name,generationConfig:{responseMimeType:"application/json",maxOutputTokens:30000,temperature:0.3}});
+}
+async function geminiJSON(prompt){
+  const models=[CFG.modeloIA||"gemini-3.8-flash","gemini-3.5-flash-lite"];let last;
+  for(const name of models){
+    try{const m=await geminiModel(name);const r=await m.generateContent(prompt+"\n\nResponde únicamente con el JSON completo, sin texto adicional.");
+      let t=String(r.response.text()||"").replace(/```(?:json)?/gi,"").trim();const a=t.indexOf("{"),b=t.lastIndexOf("}");
+      if(a<0||b<a)throw{code:"parse",message:"Respuesta sin JSON"};
+      const body=t.slice(a,b+1);for(const c of[body,body.replace(/,\s*([}\]])/g,"$1")]){try{return JSON.parse(c)}catch{}}
+      throw{code:"parse",message:"JSON incompleto"};
+    }catch(e){last=e;if(e.code==="parse")throw e;const msg=String(e.message||e);
+      if(/not.?found|404|unsupported model|is not supported/i.test(msg))continue;
+      const short=/429|quota|exhaust|rate/i.test(msg)?"se alcanzó el límite gratuito por ahora":/403|permission|not been used|disabled|API_NOT|enable/i.test(msg)?"falta activar Firebase AI Logic en la consola":"no se pudo conectar";
+      throw{code:"gemini",message:msg,short};}
+  }
+  throw{code:"gemini",message:String(last&&last.message||last),short:"el modelo no está disponible"};
+}
+function manualAI(prompt,nota){
   const full=prompt+"\n\nResponde únicamente con el JSON completo, sin texto adicional ni bloques de código.";
   const parse=t=>{
     t=String(t||"").replace(/```(?:json)?/gi,"").replace(/[“”]/g,'"').trim();
@@ -1902,7 +1935,7 @@ function manualAI(prompt){
   };
   return new Promise((resolve,reject)=>{
     const dlg=$("#ai-dlg"),resp=$("#ai-resp"),err=$("#ai-err");
-    $("#ai-prompt").value=full;resp.value="";err.textContent="";err.style.color="var(--bad)";
+    $("#ai-prompt").value=full;resp.value="";err.textContent="";err.style.color="var(--bad)";const nt=$("#ai-note");if(nt){nt.textContent=nota||"";nt.hidden=!nota}
     const close=()=>{dlg.close();["#ai-ok","#ai-cancel","#ai-copy","#ai-paste"].forEach(id=>$(id).onclick=null);resp.oninput=null;dlg.oncancel=null};
     const tryUse=(auto)=>{const r=parse(resp.value);
       if(r.json){close();toast("Respuesta cargada.");resolve(r.json);return}

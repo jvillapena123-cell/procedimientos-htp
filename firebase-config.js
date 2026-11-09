@@ -14,6 +14,12 @@ window.HTP_CONFIG = {
   // Adjuntar PDF originales. Requiere activar Storage en Firebase (plan Blaze) y desplegar storage.rules.
   usarStorage: false,
 
+  // IA automática GRATIS con Gemini (Firebase AI Logic, plan Spark sin costo).
+  // Se activa en la consola de Firebase: Servicios de IA → AI Logic → Comenzar → Gemini Developer API.
+  // Si no está activada, la app usa el modo manual con claude.ai. Ponga false para usar siempre el modo manual.
+  iaGratis: true,
+  modeloIA: "gemini-3.8-flash",
+
   // IA automática para el Generador y la conversión de Word. Déjelo vacío para usar el modo manual
   // (la app arma la instrucción, usted la pega en claude.ai y pega la respuesta).
   // Si despliega la Cloud Function de la carpeta /functions, escriba: "generarIA".
