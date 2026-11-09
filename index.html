@@ -1,0 +1,1429 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1F3A6E">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Procedimientos HTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: banda institucional navy con navegación; debajo, área de trabajo en columna de 1180px con paneles por rol. */
+:root{
+  --navy:#1F3A6E; --orange:#E8804A; --orange-ink:#B9551F;
+  --bg:#F3F5F9; --surface:#FFFFFF; --sunk:#E9EDF4; --ink:#15223B; --muted:#5A6781; --line:#D8DFEA;
+  --accent:#1F3A6E; --on-accent:#FFFFFF;
+  --ok:#24804F; --ok-bg:#E2F2E9; --warn:#A86A00; --warn-bg:#FBEFD6; --bad:#B83A31; --bad-bg:#F8E1DF; --info-bg:#E3EAF6;
+  --band:#1F3A6E; --band-ink:#FFFFFF; --band-muted:#B9C6E0;
+  --display:"Montserrat",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1524; --surface:#15203A; --sunk:#101A2F; --ink:#E4EAF4; --muted:#9AA7C0; --line:#28365A;
+  --accent:#8EADEB; --on-accent:#0D1524; --orange:#F0956A; --orange-ink:#F6AE89;
+  --ok:#5CC48D; --ok-bg:#163527; --warn:#E8B44E; --warn-bg:#3A2E12; --bad:#EE7A70; --bad-bg:#3E1D1B; --info-bg:#1C2B4D;
+  --band:#13254A; --band-ink:#FFFFFF; --band-muted:#A9B8D6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1524; --surface:#15203A; --sunk:#101A2F; --ink:#E4EAF4; --muted:#9AA7C0; --line:#28365A;
+  --accent:#8EADEB; --on-accent:#0D1524; --orange:#F0956A; --orange-ink:#F6AE89;
+  --ok:#5CC48D; --ok-bg:#163527; --warn:#E8B44E; --warn-bg:#3A2E12; --bad:#EE7A70; --bad-bg:#3E1D1B; --info-bg:#1C2B4D;
+  --band:#13254A; --band-ink:#FFFFFF; --band-muted:#A9B8D6; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:1.75rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.1rem;font-weight:700}
+h3{font-size:.98rem;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* Banda superior */
+.top{background:var(--band);color:var(--band-ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.top .wrap{display:flex;align-items:center;gap:20px;padding-block:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.logo{background:#fff;border-radius:6px;padding:6px 10px;display:flex}
+.logo img{height:26px;width:auto;display:block}
+.brand-t{display:flex;flex-direction:column;min-width:0}
+.brand-t b{font-family:var(--display);font-weight:700;font-size:.98rem;letter-spacing:.01em}
+.brand-t span{font-size:.75rem;color:var(--band-muted);letter-spacing:.06em;text-transform:uppercase}
+nav.tabs{display:flex;gap:4px;margin-left:auto;overflow-x:auto;max-width:100%;scrollbar-width:none}
+nav.tabs a{color:var(--band-muted);text-decoration:none;padding:8px 12px;border-radius:6px;font-weight:500;font-size:.9rem;white-space:nowrap;display:flex;align-items:center;gap:6px}
+nav.tabs a:hover{color:#fff;background:rgba(255,255,255,.08)}
+nav.tabs a[aria-current="page"]{color:#fff;background:rgba(255,255,255,.14);box-shadow:inset 0 -2px 0 var(--orange)}
+.badge{background:var(--orange);color:#1b0f06;font-size:.7rem;font-weight:700;border-radius:99px;padding:0 6px;line-height:1.5}
+.status{font-size:.8rem;color:var(--muted);padding-block:8px}
+.status:empty{display:none}
+main{padding-block:24px 64px}
+/* Encabezados de página */
+.pagehead{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:20px}
+.pagehead>div:first-child{min-width:0;max-width:68ch}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-ink);font-weight:600;margin-bottom:4px}
+.lede{color:var(--muted);margin-top:6px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+/* Controles */
+.btn{font:inherit;font-weight:600;font-size:.9rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;line-height:1.3}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.orange{background:var(--orange);border-color:var(--orange);color:#1b0f06}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--accent);padding-inline:8px}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.sm{font-size:.8rem;padding:5px 10px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--muted);min-width:0}
+input[type=text],input[type=number],input[type=search],select,textarea{font:inherit;font-size:.93rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:80px;line-height:1.45}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.hint{font-size:.8rem;color:var(--muted);font-weight:400}
+.check{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--sunk);cursor:pointer;font-weight:500}
+.check input{margin-top:3px;width:18px;height:18px;accent-color:var(--navy)}
+/* Paneles */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.panel>h2{margin-bottom:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.panel>h2 small{font-family:var(--body);font-weight:400;font-size:.8rem;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.two{display:grid;gap:16px;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:22px;color:var(--muted);text-align:left}
+.empty b{color:var(--ink);display:block;margin-bottom:4px}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.kpis{grid-template-columns:minmax(0,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi .k-l{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+.kpi .k-l i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.kpi .k-v{font-family:var(--display);font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .k-s{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.bar>span{display:block;height:100%;border-radius:99px}
+.c-proc{background:var(--accent)} .c-mat{background:var(--orange)}
+/* Tablas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;text-align:left;background:var(--sunk);padding:9px 10px;white-space:nowrap;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.code{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:nowrap}
+.metric{display:flex;flex-direction:column;gap:4px;min-width:92px}
+.metric b{font-variant-numeric:tabular-nums;font-weight:600;font-size:.86rem}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--sunk)}
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:600;border-radius:99px;padding:1px 9px;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.info{background:var(--info-bg);color:var(--accent)}
+.mr{font-family:var(--mono);font-weight:500}
+/* Cobertura */
+.cov td{padding:6px 8px}
+.cell4{display:inline-grid;grid-template-columns:repeat(4,12px);gap:3px}
+.cell4 i{width:12px;height:12px;border-radius:3px;background:var(--sunk);border:1px solid var(--line)}
+.cell4 i.on.p{background:var(--accent);border-color:var(--accent)}
+.cell4 i.on.m{background:var(--orange);border-color:var(--orange)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-bottom:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+/* Lista de procedimientos */
+.plist{display:flex;flex-direction:column;gap:8px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;text-decoration:none;color:inherit}
+.prow:hover{border-color:var(--accent)}
+.prow .t{font-weight:600;font-size:1rem}
+.prow .m{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:3px;font-size:.82rem;color:var(--muted)}
+.minis{display:flex;gap:14px}
+.mini{display:flex;flex-direction:column;align-items:flex-end;font-size:.72rem;color:var(--muted)}
+.mini b{font-family:var(--display);font-size:1.05rem;color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:640px){.prow{grid-template-columns:minmax(0,1fr)}.minis{justify-content:flex-start}.mini{align-items:flex-start}}
+/* Pestañas internas */
+.subtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.subtabs button{font:inherit;font-weight:600;font-size:.9rem;background:none;border:0;padding:10px 14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.subtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--orange)}
+/* Documento */
+.doc{max-width:74ch}
+.doc h3{margin:22px 0 6px;color:var(--accent)}
+.doc h3:first-child{margin-top:0}
+.doc p{margin:0 0 8px}
+.doc ul{margin:0 0 8px;padding-left:20px}
+.dochead{display:grid;grid-template-columns:auto 1fr auto;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:18px;font-size:.84rem}
+.dochead>div{padding:10px 12px;border-right:1px solid var(--line)}
+.dochead>div:last-child{border-right:0}
+.dochead .lg{background:#fff;display:flex;align-items:center}
+.dochead .lg img{height:22px}
+.dochead .ti{font-family:var(--display);font-weight:700;display:flex;flex-direction:column;justify-content:center}
+.dochead .meta{font-family:var(--mono);font-size:.76rem;color:var(--muted);white-space:nowrap}
+@media (max-width:560px){.dochead{grid-template-columns:1fr}.dochead>div{border-right:0;border-bottom:1px solid var(--line)}}
+/* Evaluación */
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;counter-reset:s}
+.steps span{font-size:.8rem;font-weight:600;color:var(--muted);padding:5px 10px 5px 6px;border-radius:99px;background:var(--sunk);display:flex;align-items:center;gap:6px}
+.steps span::before{counter-increment:s;content:counter(s);width:20px;height:20px;border-radius:99px;display:grid;place-items:center;background:var(--line);color:var(--ink);font-size:.72rem}
+.steps span.done::before{background:var(--ok);color:#fff;content:"✓"}
+.steps span.cur{color:var(--ink);background:var(--info-bg)}
+.steps span.cur::before{background:var(--accent);color:var(--on-accent)}
+.q{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.q .qt{font-weight:600}
+.q label{display:flex;gap:10px;align-items:flex-start;padding:7px 10px;border-radius:6px;cursor:pointer}
+.q label:hover{background:var(--sunk)}
+.q label.right{background:var(--ok-bg);color:var(--ok)}
+.q label.wrong{background:var(--bad-bg);color:var(--bad)}
+.q input{margin-top:4px;accent-color:var(--navy)}
+.score{display:flex;align-items:center;gap:16px;padding:16px;border-radius:var(--r);flex-wrap:wrap}
+.score.ok{background:var(--ok-bg)} .score.bad{background:var(--bad-bg)}
+.score b{font-family:var(--display);font-size:2rem;font-variant-numeric:tabular-nums}
+.sig{border:1px solid var(--line);border-radius:var(--r);background:#fff;position:relative;max-width:620px}
+.sig canvas{width:100%;height:auto;aspect-ratio:3/1;display:block;touch-action:none;cursor:crosshair;border-radius:var(--r)}
+.sig .base{position:absolute;left:24px;right:24px;bottom:28%;border-bottom:1px dashed #9AA6BC;pointer-events:none}
+.sig .lbl{position:absolute;left:24px;bottom:10%;font-size:.72rem;color:#6B7690;pointer-events:none}
+.navrow{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:18px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.sum>div{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.sum>div span{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.sum>div b{font-weight:600;overflow-wrap:anywhere}
+/* Editor */
+.mx input,.mx select,.mx textarea{font-size:.84rem;padding:6px 8px}
+.mx textarea{min-height:56px}
+.mx td{padding:6px}
+.qedit{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px}
+.qedit .op{display:flex;gap:8px;align-items:center}
+.qedit .op input[type=radio]{accent-color:var(--ok);width:18px;height:18px;flex:none}
+.sec-ed{display:flex;flex-direction:column;gap:6px;border-left:3px solid var(--line);padding-left:12px}
+.ai{background:color-mix(in srgb,var(--orange) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--orange) 40%,var(--line));border-radius:var(--r);padding:16px}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+/* Mejoras */
+.mej{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.mej .h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.8rem;color:var(--muted)}
+.mej .tx{white-space:pre-wrap;overflow-wrap:anywhere}
+.mej .resp{background:var(--sunk);border-radius:6px;padding:8px 10px;font-size:.88rem}
+.copyline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.86rem}
+.copyline code{font-family:var(--mono);background:var(--sunk);padding:3px 8px;border-radius:4px;user-select:all}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:.9rem;font-weight:500;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}
+.muted{color:var(--muted)}
+.small{font-size:.82rem}
+.doc th{white-space:normal}
+.doc p.sub{font-weight:600;margin-top:12px;color:var(--ink)}
+table.dt td{font-size:.85rem}
+.idt th{white-space:normal;text-transform:none;letter-spacing:0;font-size:.8rem;color:var(--ink);background:var(--sunk);width:1%;min-width:110px}
+.idt td{font-size:.88rem}
+.miper th{white-space:normal;min-width:44px;vertical-align:bottom}
+.miper th.grp{text-align:center;border-bottom:1px solid var(--line)}
+.miper td{font-size:.8rem;min-width:100px}
+.miper td.num,.miper td.code{min-width:0}
+.miper td.ctl{min-width:240px}
+.vfrow{display:flex;gap:8px;flex-wrap:wrap}
+.vfrow label{border:1px solid var(--line);min-width:150px}
+.sigs{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+
+body:not(.authok) nav.tabs{display:none}
+.who{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--band-muted)}
+.who .who-n{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
+.who .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.login{max-width:460px;margin:24px auto}
+input[type=password]{font:inherit;font-size:.93rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+dialog{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:20px;width:min(760px,calc(100% - 32px));max-height:calc(100% - 32px)}
+dialog::backdrop{background:rgba(10,18,34,.55)}
+dialog ol{margin:0;padding-left:20px}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo"><img alt="HTP Huachipato Terminal Portuario" src="data:image/png;base64,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"></div>
+      <div class="brand-t"><b>Procedimientos operativos</b><span>Unidad Terminal Marítimo</span></div>
+    </div>
+    <nav class="tabs" aria-label="Secciones">
+      <a href="#dashboard" data-r="dashboard">Dashboard</a>
+      <a href="#procedimientos" data-r="procedimientos">Procedimientos</a>
+      <a href="#evaluar" data-r="evaluar">Difundir y evaluar</a>
+      <a href="#generador" data-r="generador">Generador</a>
+      <a href="#cargar" data-r="cargar" id="nav-cg" hidden>Cargar</a>
+      <a href="#mejoras" data-r="mejoras">Mejoras <span class="badge" id="mbadge" hidden></span></a>
+      <a href="#personal" data-r="personal">Personal</a>
+      <a href="#usuarios" data-r="usuarios" id="nav-us" hidden>Usuarios</a>
+    </nav>
+    <div class="who" id="who"></div>
+  </div>
+</header>
+<div class="wrap"><p class="status" id="status">Conectando con la base de datos…</p></div>
+<main class="wrap" id="view"></main>
+<div id="toast" role="status" hidden></div>
+<dialog id="ai-dlg" aria-labelledby="ai-h"><div class="stack">
+  <div><p class="eyebrow">Asistente de redacción</p><h2 id="ai-h">Generar con Claude</h2></div>
+  <ol class="small"><li>Copie la instrucción de abajo.</li><li>Péguela en una conversación nueva de Claude (claude.ai).</li><li>Copie la respuesta completa y péguela en el segundo cuadro.</li></ol>
+  <label class="f">Instrucción para Claude<textarea id="ai-prompt" rows="6" readonly></textarea></label>
+  <div class="row"><button class="btn" id="ai-copy" type="button">Copiar instrucción</button><span class="hint">Si configura la función de IA en Firebase, este paso es automático.</span></div>
+  <label class="f">Respuesta de Claude<textarea id="ai-resp" rows="6" placeholder="Pegue aquí la respuesta completa (JSON)"></textarea></label>
+  <p class="small" id="ai-err" style="color:var(--bad)"></p>
+  <div class="row"><span class="sp"></span><button class="btn" id="ai-cancel" type="button">Cancelar</button><button class="btn primary" id="ai-ok" type="button">Usar respuesta</button></div>
+</div></dialog>
+
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script>
+"use strict";
+const LOGO = document.querySelector('.logo img').src;
+const CFG=window.HTP_CONFIG||{};const FB=!!window.HTP_CONFIG;
+const JEFE_MAIL=CFG.correoJefe||"jvilla@htpchile.cl";
+const assetHref=p=>p.docUrl||("/_blob/"+p.docAssetId);
+const AREAS = ["Operaciones portuarias","Descarga de graneles","Carga general / acero","Amarre y desamarre","Equipos y grúas","Seguridad y emergencias","Protección PBIP","Medio ambiente","Mantención"];
+const TURNOS = ["Turno A","Turno B","Turno C","Turno D","Administrativo"];
+const MEJ_ESTADOS = {nueva:["Nueva","warn"],revision:["En revisión","info"],implementada:["Implementada","ok"],descartada:["Descartada",""]};
+
+const S = {db:null,user:null,assets:null,sample:null,downloads:null,uid:null,me:null,canEdit:false,
+  procs:[],personal:[],regs:{},mejoras:{},names:{},ready:false,slow:false,dbErr:null,personalErr:false,
+  draft:null,ev:null,gen:null,genBusy:false};
+const subs = {regs:{},mej:{}};
+
+/* ---------- utilidades ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const clone = o=>JSON.parse(JSON.stringify(o));
+const fmtDate = t=>t?new Date(t).toLocaleDateString("es-CL",{day:"2-digit",month:"2-digit",year:"numeric"}):"—";
+const fmtDT = t=>t?new Date(t).toLocaleString("es-CL",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"—";
+const pct = (a,b)=>b?Math.round(a*100/b):0;
+let toastT;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3800)}
+function errMsg(e){
+  const c=e&&e.code;
+  if(c==="cancelled")return "Operación cancelada.";
+  if(c==="permission_denied"||c==="permission-denied"||c==="not_granted") return "No tiene permiso para esta acción. Pida al administrador acceso de colaborador o editor.";
+  if(c==="unavailable") return "Sin conexión con la base de datos. Intente nuevamente en unos segundos.";
+  if(c==="invalid_argument") return "El registro es demasiado grande o tiene datos no válidos.";
+  return (e&&e.message)||"No se pudo completar la acción.";
+}
+function normRut(r){r=String(r||"").replace(/[^0-9kK]/g,"").toUpperCase();return r.length<2?"":r.slice(0,-1)+"-"+r.slice(-1)}
+function rutOk(r){const n=normRut(r);if(!n)return false;const[b,dv]=n.split("-");if(!/^\d{6,8}$/.test(b))return false;let s=0,m=2;for(let i=b.length-1;i>=0;i--){s+=+b[i]*m;m=m===7?2:m+1}const x=11-(s%11);return (x===11?"0":x===10?"K":String(x))===dv}
+function fmtRut(r){const n=normRut(r);if(!n)return r||"";const[b,dv]=n.split("-");return b.replace(/\B(?=(\d{3})+(?!\d))/g,".")+"-"+dv}
+function personKey(doc){return rutOk(doc)?normRut(doc):"DOC-"+String(doc||"").replace(/[^0-9A-Za-z]/g,"").toUpperCase()}
+function setPath(o,path,val){const k=path.split(".");let c=o;for(let i=0;i<k.length-1;i++){c=c[/^\d+$/.test(k[i])?+k[i]:k[i]]}c[/^\d+$/.test(k.at(-1))?+k.at(-1):k.at(-1)]=val}
+function mrInfo(p,c){const v=(+p||0)*(+c||0);if(!v)return{v:"—",t:"Sin evaluar",k:""};if(v<=2)return{v,t:"Tolerable",k:"ok"};if(v===4)return{v,t:"Moderado",k:"info"};if(v===8)return{v,t:"Importante",k:"warn"};return{v,t:"Intolerable",k:"bad"}}
+function textBlocks(t){
+  const out=[];let tbl=null,list=null;
+  const endT=()=>{if(tbl){out.push({type:"table",rows:tbl});tbl=null}};const endL=()=>{if(list){out.push({type:"list",items:list});list=null}};
+  for(const raw of String(t||"").split(/\n/)){const l=raw.trim();
+    if(l.includes(" | ")||/^\|.*\|$/.test(l)){endL();(tbl??=[]).push(l.replace(/^\||\|$/g,"").split("|").map(x=>x.trim()));continue}
+    if(/^[-•*]\s+/.test(l)){endT();(list??=[]).push(l.replace(/^[-•*]\s+/,""));continue}
+    endT();endL();if(l)out.push({type:/^(\d+\.\d+\.?\s|Paso \d+|Anexo [A-Z])/.test(l)?"sub":"p",text:l});
+  }
+  endT();endL();return out;
+}
+function fmtText(t){
+  const b=textBlocks(t);if(!b.length)return'<p class="muted">Sin contenido.</p>';
+  return b.map(x=>x.type==="table"?`<div class="tbl-wrap" style="margin:6px 0 12px"><table class="dt"><thead><tr>${x.rows[0].map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${x.rows.slice(1).map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
+    :x.type==="list"?`<ul>${x.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`:x.type==="sub"?`<p class="sub">${esc(x.text)}</p>`:`<p>${esc(x.text)}</p>`).join("");
+}
+const fmtCell=t=>esc(t).replace(/\n/g,"<br>");
+function shuffleQ(q){const ops=q.ops.map((o,i)=>({o,ok:i===q.ok}));for(let i=ops.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ops[i],ops[j]]=[ops[j],ops[i]]}return{q:q.q,ops:ops.map(x=>x.o),ok:ops.findIndex(x=>x.ok)}}
+function isVF(q){return q.tipo==="vf"||!Array.isArray(q.ops)||(q.ops.length===2&&/^v/i.test(String(q.ops[0]))&&/^f/i.test(String(q.ops[1])))}
+function cleanQs(a){return (Array.isArray(a)?a:[]).filter(q=>q&&q.q).map(q=>{
+  if(isVF(q)){let ok=q.ok;if(typeof ok==="string")ok=/^f/i.test(ok)?1:0;if(typeof q.correcta==="string")ok=/^f/i.test(q.correcta)?1:0;if(typeof q.respuesta==="string")ok=/^f/i.test(q.respuesta)?1:0;
+    return{tipo:"vf",q:String(q.q),ops:["Verdadero","Falso"],ok:ok?1:0,just:String(q.just||"")}}
+  const ops=q.ops.slice(0,4).map(String);while(ops.length<4)ops.push("");
+  return Object.assign(shuffleQ({q:String(q.q),ops,ok:Math.min(3,Math.max(0,+q.ok||0))}),{tipo:"alt",just:String(q.just||"")})})}
+function compactQ(q){
+  if(q.tipo==="vf")return{tipo:"vf",q:String(q.q).trim(),ops:["Verdadero","Falso"],ok:q.ok?1:0,just:String(q.just||"").trim()};
+  const ops=[];let ok=0;q.ops.forEach((o,j)=>{if(String(o).trim()){if(j===q.ok)ok=ops.length;ops.push(String(o).trim())}});
+  return{tipo:"alt",q:String(q.q).trim(),ops,ok,just:String(q.just||"").trim()};
+}
+function padQs(a){return (a||[]).map(q=>{if(q.tipo==="vf")return{...q,ops:["Verdadero","Falso"],just:q.just||""};const ops=q.ops.slice(0,4);while(ops.length<4)ops.push("");return{tipo:"alt",q:q.q,ops,ok:q.ok,just:q.just||""}})}
+function cleanPC(v){v=+v;return [1,2,4].includes(v)?v:(v>=3?4:v>=2?2:1)}
+const IT_SECS=["1. Objetivo","2. Alcance","3. Documentos de referencia","4. Definiciones","5. Responsabilidades","6. Recursos y competencias","7. Riesgos críticos y controles","8. Desarrollo de la actividad","9. Control de desviaciones y salidas no conformes","10. Registros","11. Seguimiento y medición","12. Anexos","13. Control de cambios"];
+const FIRMAS_K=[["elaboro","Elaboró"],["reviso","Revisó"],["aprobo","Aprobó"]];
+function blankFirmas(){return{elaboro:{nombre:"",cargo:"Jefe de Turno",fecha:""},reviso:{nombre:"",cargo:"Prevención de Riesgos / Calidad",fecha:""},aprobo:{nombre:"",cargo:"Jefe de Operaciones TTMM",fecha:""}}}
+function blankProc(){return{codigo:"",titulo:"",version:"01",versionAnterior:"",area:AREAS[0],estado:"borrador",aprobacion:80,
+  proceso:"",subproceso:"",actividad:"",sistemas:"Calidad · Ambiente · Energía · Seguridad y Salud en el Trabajo",tarea:"",tipoTarea:"Rutinaria",lugares:"",
+  firmasDoc:blankFirmas(),secciones:IT_SECS.map(t=>({titulo:t,texto:""})),matriz:[],preguntasProc:[],preguntasMat:[],docAssetId:null,docNombre:null}}
+function blankRow(){return{etapa:"",puestos:"",peligro:"",riesgo:"",dano:"",p:2,c:2,evalIni:"",control:"",pr:1,cr:2,evalRes:"",responsable:""}}
+function normRow(r){return Object.assign(blankRow(),{p:null,c:null,pr:null,cr:null},r,{etapa:r.etapa??r.actividad??""})}
+const pcOpt=v=>(v===""||v==null||isNaN(+v)||!+v)?null:cleanPC(v);
+function withFirmas(p){const f=blankFirmas();const src=p.firmasDoc||{};FIRMAS_K.forEach(([k])=>Object.assign(f[k],src[k]||{}));return f}
+const procById = id=>S.procs.find(p=>p.id===id);
+const vigentes = ()=>S.procs.filter(p=>p.estado!=="borrador").sort((a,b)=>String(a.codigo).localeCompare(String(b.codigo)));
+const allRegs = ()=>Object.values(S.regs).flat();
+const activos = ()=>S.personal.filter(p=>p.activo!==false);
+function nameOf(uid){return uid===S.uid?"Usted":(S.names[uid]||"Otra cuenta")}
+
+/* ---------- cobertura ---------- */
+function coverage(){
+  const map={};
+  for(const r of allRegs()){
+    if(r.anulado)continue;const p=procById(r.pid);if(!p||String(r.version)!==String(p.version))continue;
+    const m=map[r.pid]??={};const f=m[r.pkey]??={pd:false,pe:false,md:false,me:false,nombre:r.nombre,rut:r.rut,last:0};
+    f.pd||=!!r.procLeido;f.pe||=!!r.procOk;f.md||=!!r.matLeida;f.me||=!!r.matOk;if(r.fecha>f.last){f.last=r.fecha;f.nombre=r.nombre}
+  }
+  return map;
+}
+function procCounts(map,pid){const m=map[pid]||{};const v=Object.values(m);return{pd:v.filter(x=>x.pd).length,pe:v.filter(x=>x.pe).length,md:v.filter(x=>x.md).length,me:v.filter(x=>x.me).length,n:v.length}}
+
+/* ---------- router ---------- */
+const views={};let cur=null;
+function route(){
+  if(FB&&!document.body.classList.contains("authok"))return;
+  const h=(location.hash||"#dashboard").slice(1);
+  let name=h,arg=null;
+  if(h.startsWith("p-")){name="detalle";arg=h.slice(2)}
+  else if(h.startsWith("editar-")){name="editor";arg=h.slice(7)}
+  else if(h==="nuevo"){name="editor";arg=null}
+  if(!views[name]){name="dashboard"}
+  const navKey={detalle:"procedimientos",editor:"procedimientos"}[name]||name;
+  $$("nav.tabs a").forEach(a=>{if(a.dataset.r!==navKey)a.removeAttribute("aria-current");else a.setAttribute("aria-current","page")});
+  cur={name,arg,v:views[name]};
+  const el=$("#view");el.innerHTML="";cur.v.mount(el,arg);window.scrollTo(0,0);
+}
+function update(){
+  updateStatus();updateBadge();
+  if(cur&&cur.v.update)cur.v.update();
+}
+function updateStatus(){
+  const s=$("#status");
+  if(!S.db){s.textContent=S.ready?"Inicie sesión para ver y registrar información.":"Conectando con la base de datos…";return}
+  if(S.dbErr){s.textContent="No se pudo leer la base de datos: "+S.dbErr+". Recargue la página más tarde.";return}
+  if(!S.loaded&&S.slow){s.textContent="La base de datos aún no responde. Los datos pueden estar desactualizados.";return}
+  if(!S.loaded){s.textContent="Cargando datos…";return}
+  s.textContent="";
+}
+function updateBadge(){
+  const b=$("#mbadge");if(!S.canEdit){b.hidden=true;return}
+  const n=Object.values(S.mejoras).flat().filter(m=>(m.estado||"nueva")==="nueva").length;
+  b.hidden=!n;b.textContent=n;
+}
+window.addEventListener("hashchange",route);
+$("#view").addEventListener("change",e=>{const m=/^([PM])-(\d+)$/.exec(e.target.name||"");if(!m||!S.ev||e.target.type!=="radio")return;(m[1]==="P"?S.ev.ansP:S.ev.ansM)[+m[2]]=+e.target.value});
+
+/* ---------- vista: dashboard ---------- */
+views.dashboard={
+  mount(el){
+    el.innerHTML=`
+    <section class="pagehead"><div><p class="eyebrow">Panel de control</p><h1>Difusión y evaluación</h1>
+      <p class="lede">Se cuenta la revisión vigente de cada procedimiento. Un trabajador queda <b>difundido</b> al firmar la lectura y <b>evaluado</b> al aprobar la prueba.</p></div>
+      <div class="actions"><a class="btn primary" href="#evaluar">Difundir y evaluar</a><button class="btn" id="csv">Exportar CSV</button></div></section>
+    <div class="kpis" data-slot="kpis"></div>
+    <div class="stack">
+      <section class="panel"><h2>Por procedimiento <small data-slot="den"></small></h2><div data-slot="tabla"></div></section>
+      <section class="panel"><h2>Cobertura por trabajador</h2>
+        <div class="legend"><span><span class="cell4"><i class="p on"></i><i class="p"></i><i class="m"></i><i class="m"></i></span>Proc. difundido</span><span><span class="cell4"><i class="p"></i><i class="p on"></i><i class="m"></i><i class="m"></i></span>Proc. evaluado</span><span><span class="cell4"><i class="p"></i><i class="p"></i><i class="m on"></i><i class="m"></i></span>Matriz difundida</span><span><span class="cell4"><i class="p"></i><i class="p"></i><i class="m"></i><i class="m on"></i></span>Matriz evaluada</span></div>
+        <div data-slot="grid"></div></section>
+      <div class="two">
+        <section class="panel"><h2>Últimos registros</h2><div data-slot="rec"></div></section>
+        <section class="panel"><h2>Mejoras recibidas</h2><div data-slot="mej"></div></section>
+      </div>
+    </div>`;
+    $("#csv",el).onclick=exportCSV;
+    this.update();
+  },
+  update(){
+    const el=$("#view");const vig=vigentes();const map=coverage();const N=activos().length;const M=vig.length;
+    let tot={pd:0,pe:0,md:0,me:0};vig.forEach(p=>{const c=procCounts(map,p.id);for(const k in tot)tot[k]+=c[k]});
+    const den=N*M;
+    const tile=(lbl,k,cls)=>`<div class="kpi"><span class="k-l"><i class="${cls}"></i>${lbl}</span>
+      <span class="k-v">${den?pct(tot[k],den)+"%":tot[k]}</span>
+      <span class="k-s">${den?`${tot[k]} de ${den} asignaciones`:"trabajador·procedimiento"}</span>
+      <div class="bar"><span class="${cls}" style="width:${den?pct(tot[k],den):0}%"></span></div></div>`;
+    $('[data-slot="kpis"]',el).innerHTML=tile("Procedimiento difundido","pd","c-proc")+tile("Procedimiento evaluado","pe","c-proc")+tile("Matriz difundida","md","c-mat")+tile("Matriz evaluada","me","c-mat");
+    $('[data-slot="den"]',el).textContent=N?`Base: ${N} trabajadores activos × ${M} procedimientos vigentes`:"Cargue el personal para calcular % de cobertura";
+    if(!M){$('[data-slot="tabla"]',el).innerHTML=`<div class="empty"><b>Aún no hay procedimientos vigentes.</b>${S.canEdit?'Cree uno en <a href="#nuevo">Nuevo procedimiento</a> o use el <a href="#generador">Generador</a>.':'Cuando el Jefe de Operaciones publique procedimientos aparecerán aquí.'}</div>`}
+    else{
+      const met=(v,cls)=>`<div class="metric"><b>${v}${N?" / "+N:""}</b>${N?`<div class="bar"><span class="${cls}" style="width:${pct(v,N)}%"></span></div>`:""}</div>`;
+      $('[data-slot="tabla"]',el).innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Código</th><th>Procedimiento</th><th>Rev.</th><th>Proc. difundido</th><th>Proc. evaluado</th><th>Matriz difundida</th><th>Matriz evaluada</th></tr></thead><tbody>
+      ${vig.map(p=>{const c=procCounts(map,p.id);return`<tr class="click" data-go="#p-${esc(p.id)}"><td class="code">${esc(p.codigo)}</td><td>${esc(p.titulo)}</td><td class="code">${esc(p.version)}</td><td>${met(c.pd,"c-proc")}</td><td>${met(c.pe,"c-proc")}</td><td>${met(c.md,"c-mat")}</td><td>${met(c.me,"c-mat")}</td></tr>`}).join("")}
+      </tbody></table></div>`;
+    }
+    // grilla
+    let people=activos().map(p=>({key:p.key||personKey(p.rut),nombre:p.nombre,sub:[p.cargo,p.empresa].filter(Boolean).join(" · ")}));
+    if(!people.length){const seen={};vig.forEach(p=>Object.entries(map[p.id]||{}).forEach(([k,f])=>{seen[k]??={key:k,nombre:f.nombre,sub:fmtRut(f.rut)}}));people=Object.values(seen)}
+    people.sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+    if(!people.length||!M){$('[data-slot="grid"]',el).innerHTML=`<div class="empty"><b>Sin trabajadores registrados.</b>Agregue la dotación en <a href="#personal">Personal</a> o registre la primera difusión.</div>`}
+    else{
+      $('[data-slot="grid"]',el).innerHTML=`<div class="tbl-wrap"><table class="cov"><thead><tr><th>Trabajador</th>${vig.map(p=>`<th title="${esc(p.titulo)}">${esc(p.codigo||p.titulo)}</th>`).join("")}<th class="num">Completo</th></tr></thead><tbody>
+      ${people.map(pp=>{let full=0;const cells=vig.map(p=>{const f=(map[p.id]||{})[pp.key]||{};if(f.pd&&f.pe&&f.md&&f.me)full++;return`<td><span class="cell4"><i class="p ${f.pd?"on":""}"></i><i class="p ${f.pe?"on":""}"></i><i class="m ${f.md?"on":""}"></i><i class="m ${f.me?"on":""}"></i></span></td>`}).join("");
+        return`<tr><td><b>${esc(pp.nombre)}</b><div class="small muted">${esc(pp.sub||"")}</div></td>${cells}<td class="num">${full}/${M}</td></tr>`}).join("")}
+      </tbody></table></div>`;
+    }
+    const rec=allRegs().filter(r=>!r.anulado).sort((a,b)=>b.fecha-a.fecha).slice(0,8);
+    $('[data-slot="rec"]',el).innerHTML=rec.length?`<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Trabajador</th><th>Procedimiento</th><th>Resultado</th></tr></thead><tbody>${rec.map(r=>`<tr><td class="code">${fmtDT(r.fecha)}</td><td>${esc(r.nombre)}</td><td class="code">${esc(r.codigo)}</td><td>${resultChips(r)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty"><b>Sin registros todavía.</b>Use <a href="#evaluar">Difundir y evaluar</a> en la reunión VIT o en terreno.</div>`;
+    const mj=Object.values(S.mejoras).flat().sort((a,b)=>b.fecha-a.fecha);
+    $('[data-slot="mej"]',el).innerHTML=S.canEdit?(mj.length?`<div class="stack">${mj.slice(0,4).map(m=>`<div class="row small"><span class="chip ${MEJ_ESTADOS[m.estado||"nueva"][1]}">${MEJ_ESTADOS[m.estado||"nueva"][0]}</span><span class="sp">${esc(String(m.texto).slice(0,90))}${String(m.texto).length>90?"…":""}</span></div>`).join("")}<a href="#mejoras">Ver bandeja completa</a></div>`:`<div class="empty"><b>Sin comentarios.</b>Las sugerencias del personal llegarán aquí.</div>`):`<div class="empty"><b>¿Tiene una idea para mejorar un procedimiento?</b><a href="#mejoras">Envíela al Jefe de Operaciones</a>.</div>`;
+    $$("[data-go]",el).forEach(t=>t.onclick=()=>location.hash=t.dataset.go);
+  }
+};
+function resultChips(r){
+  const c=[];
+  if(r.procLeido)c.push('<span class="chip info">IT difundida</span>');
+  if(r.procNota!=null)c.push(`<span class="chip ${r.procOk?"ok":"bad"}">IT ${esc(r.procPuntaje||r.procNota+"%")}</span>`);
+  if(r.matLeida)c.push('<span class="chip info">MIPER difundida</span>');
+  if(r.matNota!=null)c.push(`<span class="chip ${r.matOk?"ok":"bad"}">MIPER ${esc(r.matPuntaje||r.matNota+"%")}</span>`);
+  return `<span class="row">${c.join("")}</span>`;
+}
+
+/* ---------- vista: procedimientos ---------- */
+views.procedimientos={
+  mount(el){
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Biblioteca</p><h1>Procedimientos y matrices</h1><p class="lede">Documentos de la Unidad Terminal Marítimo con su matriz IPER y preguntas de evaluación.</p></div>
+      <div class="actions">${S.canEdit?'<a class="btn primary" href="#nuevo">Nuevo procedimiento</a><a class="btn" href="#cargar">Cargar existentes</a><a class="btn" href="#generador">Generar con IA</a>':""}</div></section>
+      <div class="row" style="margin-bottom:14px"><input type="search" id="q" placeholder="Buscar por código o título" style="max-width:340px"><select id="fa" style="max-width:240px"><option value="">Todas las áreas</option>${AREAS.map(a=>`<option>${esc(a)}</option>`).join("")}</select></div>
+      <div data-slot="list"></div>`;
+    $("#q",el).oninput=()=>this.update();$("#fa",el).onchange=()=>this.update();this.update();
+  },
+  update(){
+    const el=$("#view");const q=($("#q",el)?.value||"").toLowerCase();const fa=$("#fa",el)?.value||"";const map=coverage();const N=activos().length;
+    let list=S.procs.filter(p=>(S.canEdit||p.estado!=="borrador")&&(!fa||p.area===fa)&&(!q||(p.codigo+" "+p.titulo).toLowerCase().includes(q)));
+    list.sort((a,b)=>String(a.codigo).localeCompare(String(b.codigo)));
+    if(!list.length){$('[data-slot="list"]',el).innerHTML=`<div class="empty"><b>${S.procs.length?"Ningún procedimiento coincide con la búsqueda.":S.loaded?"La biblioteca está vacía.":"Cargando procedimientos…"}</b>${!S.procs.length&&S.canEdit?'Cárguelos desde <a href="#cargar">Cargar existentes</a>, cree uno con <a href="#nuevo">Nuevo procedimiento</a> o redacte uno desde sus ideas con el <a href="#generador">Generador</a>.':""}</div>`;return}
+    $('[data-slot="list"]',el).innerHTML=`<div class="plist">${list.map(p=>{const c=procCounts(map,p.id);const d=v=>N?pct(v,N)+"%":v;return`<a class="prow" href="#p-${esc(p.id)}"><div style="min-width:0"><div class="t">${esc(p.titulo||"Sin título")}</div>
+      <div class="m"><span class="code">${esc(p.codigo||"—")} · Rev. ${esc(p.version)}</span><span>${esc(p.area||"")}</span>${p.estado==="borrador"?'<span class="chip warn">Borrador</span>':'<span class="chip ok">Vigente</span>'}<span>${(p.matriz||[]).length} riesgos · ${(p.preguntasProc||[]).length+(p.preguntasMat||[]).length} preguntas</span></div></div>
+      <div class="minis"><div class="mini"><b>${d(c.pd)}</b>P. difundido</div><div class="mini"><b>${d(c.pe)}</b>P. evaluado</div><div class="mini"><b>${d(c.md)}</b>M. difundida</div><div class="mini"><b>${d(c.me)}</b>M. evaluada</div></div></a>`}).join("")}</div>`;
+  }
+};
+
+/* ---------- componentes de lectura ---------- */
+function vepCell(p,c,txt){if(p==null||c==null||!(+p)||!(+c))return txt?`<span class="small">${esc(txt)}</span>`:'<span class="muted">—</span>';const m=mrInfo(p,c);return`<span class="chip ${m.k}"><span class="mr">${m.v}</span> ${m.t}</span>`}
+function docHeadHTML(p){
+  const f=withFirmas(p);
+  return`<div class="dochead"><div class="lg"><img src="${LOGO}" alt="HTP"></div><div class="ti"><span class="small muted" style="font-family:var(--body);font-weight:500">Instructivo de trabajo</span>${esc(p.titulo)}</div><div class="meta">${esc(p.codigo||"—")}<br>Versión ${esc(p.version)}<br>${esc(p.area||"")}</div></div>
+  <div class="tbl-wrap" style="margin-bottom:12px"><table class="idt"><tbody>
+  <tr><th>Proceso</th><td>${esc(p.proceso||"—")}</td><th>Subproceso</th><td>${esc(p.subproceso||"—")}</td></tr>
+  <tr><th>Actividad</th><td colspan="3">${esc(p.actividad||"—")}</td></tr>
+  <tr><th>Sistemas de gestión</th><td colspan="3">${esc(p.sistemas||"—")}</td></tr>
+  <tr><th>Versión</th><td>${esc(p.version)}</td><th>Versión anterior</th><td>${esc(p.versionAnterior||"—")}</td></tr></tbody></table></div>
+  <div class="tbl-wrap" style="margin-bottom:18px"><table class="idt"><thead><tr><th></th>${FIRMAS_K.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>
+  ${[["nombre","Nombre"],["cargo","Cargo"],["fecha","Fecha"]].map(([k,l])=>`<tr><th>${l}</th>${FIRMAS_K.map(([x])=>`<td>${esc(f[x][k]||"—")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function docBodyHTML(p){
+  const link=p.docAssetId?`<p style="margin-bottom:14px"><a class="btn" href="${esc(assetHref(p))}" target="_blank" rel="noopener">Abrir documento original${p.docNombre?" ("+esc(p.docNombre)+")":""}</a></p>`:"";
+  const secs=(p.secciones||[]).filter(s=>s.titulo||s.texto);
+  return docHeadHTML(p)+link+(secs.length?`<div class="doc">${secs.map(s=>`<h3>${esc(s.titulo)}</h3>${fmtText(s.texto)}`).join("")}</div>`:(p.docAssetId?"":'<div class="empty">Este instructivo no tiene contenido cargado.</div>'));
+}
+function matrixHTML(rows,p){
+  const head=p&&(p.tarea||p.lugares)?`<div class="sum" style="margin-bottom:12px"><div><span>Tarea</span><b>${esc(p.tarea||"—")}</b></div><div><span>Tipo de tarea</span><b>${esc(p.tipoTarea||"—")}</b></div><div><span>Lugares específicos</span><b>${esc(p.lugares||"—")}</b></div></div>`:"";
+  if(!rows||!rows.length)return head+'<div class="empty"><b>Sin matriz cargada.</b>La MIPER de la tarea aparecerá aquí.</div>';
+  return head+`<div class="tbl-wrap"><table class="miper"><thead><tr><th rowspan="2">N°</th><th rowspan="2">Etapa / pasos IT</th><th rowspan="2">Puestos expuestos</th><th rowspan="2">Peligro / factor de riesgo (GEMA)</th><th rowspan="2">Riesgo (código ISP)</th><th rowspan="2">Daño probable</th><th colspan="3" class="grp">Evaluación inicial</th><th rowspan="2">Medidas de control (jerarquía DS 44)</th><th colspan="3" class="grp">Evaluación residual</th><th rowspan="2">Responsable</th></tr>
+  <tr><th class="num">P</th><th class="num">C</th><th>VEP</th><th class="num">P</th><th class="num">C</th><th>VEP</th></tr></thead><tbody>
+  ${rows.map((r0,i)=>{const r=normRow(r0);return`<tr><td class="code">${i+1}</td><td>${fmtCell(r.etapa)}</td><td>${fmtCell(r.puestos)}</td><td>${fmtCell(r.peligro)}</td><td>${fmtCell(r.riesgo)}</td><td>${fmtCell(r.dano)}</td><td class="num">${esc(r.p??"")}</td><td class="num">${esc(r.c??"")}</td><td>${vepCell(r.p,r.c,r.evalIni)}</td><td class="ctl">${fmtCell(r.control)}</td><td class="num">${esc(r.pr??"")}</td><td class="num">${esc(r.cr??"")}</td><td>${vepCell(r.pr,r.cr,r.evalRes)}</td><td>${fmtCell(r.responsable)}</td></tr>`}).join("")}
+  </tbody></table></div><p class="hint" style="margin-top:8px">Método VEP (Guía ISP): VEP = P × C. P: 1 baja, 2 media, 4 alta. C: 1 ligeramente dañino, 2 dañino, 4 extremadamente dañino. 1–2 Tolerable · 4 Moderado · 8 Importante · 16 Intolerable.</p>`;
+}
+function qsHTML(arr,showKey){
+  if(!(arr||[]).length)return'<div class="empty">Sin preguntas.</div>';
+  return`<div class="stack">${arr.map((q,i)=>`<div class="q"><div class="row"><span class="qt sp">${i+1}. ${esc(q.q)}</span><span class="chip">${q.tipo==="vf"?"V / F":"Alternativas"}</span></div>
+    ${showKey?(q.tipo==="vf"?`<div class="small"><b style="color:var(--ok)">Respuesta: ${q.ok?"Falso":"Verdadero"}</b></div>`:`<ol type="a" style="margin:0;padding-left:22px">${q.ops.map((o,j)=>`<li${j===q.ok?' style="color:var(--ok);font-weight:600"':""}>${esc(o)}${j===q.ok?" ✓":""}</li>`).join("")}</ol>`)+(q.just?`<div class="small muted">Justificación: ${esc(q.just)}</div>`:""):`<span class="hint">${q.tipo==="vf"?"Verdadero o falso":q.ops.length+" alternativas"}</span>`}</div>`).join("")}</div>`;
+}
+/* ---------- vista: detalle ---------- */
+views.detalle={
+  tab:"doc",
+  mount(el,id){this.id=id;this.tab="doc";this.render(el)},
+  update(){this.render($("#view"))},
+  render(el){
+    const p=procById(this.id);
+    if(!p){el.innerHTML=`<div class="empty"><b>${S.loaded?"Este instructivo no existe o fue eliminado.":"Cargando…"}</b><a href="#procedimientos">Volver a la biblioteca</a></div>`;return}
+    const regs=allRegs().filter(r=>r.pid===p.id&&!r.anulado).sort((a,b)=>b.fecha-a.fecha);
+    const nq=(p.preguntasProc||[]).length+(p.preguntasMat||[]).length;
+    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`]];
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / ${esc(p.codigo||"")}</p><h1>${esc(p.titulo)}</h1>
+      <p class="lede">Versión ${esc(p.version)} · ${esc(p.proceso||p.area||"")} · Aprobación ${esc(p.aprobacion||80)}% · ${p.estado==="borrador"?'<span class="chip warn">Borrador</span>':'<span class="chip ok">Vigente</span>'}</p></div>
+      <div class="actions">${p.estado!=="borrador"?`<button class="btn primary" id="go-ev">Difundir y evaluar</button>`:""}${S.canEdit?`<a class="btn" href="#editar-${esc(p.id)}">Editar</a><button class="btn" id="dl-word">IT en Word</button><button class="btn" id="dl-eval" ${nq?"":"disabled"}>Evaluación en Word</button>`:""}<a class="btn ghost" href="#mejoras" id="go-mej">Sugerir mejora</a></div></section>
+      <div class="subtabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-t="${k}" aria-selected="${this.tab===k}">${l}</button>`).join("")}</div>
+      <div id="tabc"></div>`;
+    $$(".subtabs button",el).forEach(b=>b.onclick=()=>{this.tab=b.dataset.t;this.render(el)});
+    $("#go-ev",el)&&($("#go-ev",el).onclick=()=>{S.ev=newEv(p.id);location.hash="#evaluar"});
+    $("#dl-word",el)&&($("#dl-word",el).onclick=()=>downloadWord(p));
+    $("#dl-eval",el)&&($("#dl-eval",el).onclick=()=>downloadEvalWord(p));
+    $("#go-mej",el).onclick=()=>{S.mejPid=p.id};
+    const c=$("#tabc",el);
+    if(this.tab==="doc")c.innerHTML=`<div class="panel">${docBodyHTML(p)}</div>`;
+    if(this.tab==="mat")c.innerHTML=`<div class="panel">${matrixHTML(p.matriz,p)}</div>`;
+    if(this.tab==="preg")c.innerHTML=`<div class="panel stack"><h3>Evaluación del instructivo</h3>${qsHTML(p.preguntasProc,S.canEdit)}<h3>Evaluación de la MIPER</h3>${qsHTML(p.preguntasMat,S.canEdit)}${S.canEdit?"":'<p class="hint">La pauta de corrección solo la ven los editores.</p>'}</div>`;
+    if(this.tab==="reg"){
+      c.innerHTML=`<div class="panel"><div class="row" style="margin-bottom:12px"><span class="muted small sp">Registros firmados. Los de versiones anteriores no cuentan en la cobertura actual.</span><button class="btn" id="pdf-all" ${regs.length?"":"disabled"}>Descargar registro PDF</button></div>
+      ${regs.length?`<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Trabajador</th><th>RUT</th><th>Cargo / Empresa</th><th>Versión</th><th>Resultado</th><th>Relator</th><th></th></tr></thead><tbody>
+      ${regs.map(r=>`<tr><td class="code">${fmtDT(r.fecha)}</td><td>${esc(r.nombre)}</td><td class="code">${esc(fmtRut(r.rut))}</td><td>${esc(r.cargo)}<div class="small muted">${esc(r.empresa)}</div></td><td class="code">${esc(r.version)}${String(r.version)!==String(p.version)?' <span class="chip">anterior</span>':""}</td><td>${resultChips(r)}</td><td class="small">${esc(r.relator||"—")}<div class="muted">${esc(nameOf(r.owner))}</div></td><td><button class="btn sm" data-pdf="${esc(r.owner)}|${esc(r.id)}">PDF</button>${r.owner===S.uid?` <button class="btn sm ghost" data-anular="${esc(r.id)}">Anular</button>`:""}</td></tr>`).join("")}
+      </tbody></table></div>`:'<div class="empty"><b>Sin registros para este instructivo.</b>Presione “Difundir y evaluar” para registrar la primera firma.</div>'}</div>`;
+      const cur=regs.filter(r=>String(r.version)===String(p.version));
+      $("#pdf-all",c).onclick=()=>registroPDF(p,cur.length?cur:regs);
+      $$("[data-pdf]",c).forEach(b=>b.onclick=()=>{const[o,i]=b.dataset.pdf.split("|");registroPDF(p,regs.filter(r=>r.owner===o&&r.id===i))});
+      $$("[data-anular]",c).forEach(b=>b.onclick=async()=>{
+        if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="¿Confirmar anulación?";b.classList.add("danger");return}
+        try{await S.db.doc(`evaluaciones/${S.uid}/regs/${b.dataset.anular}`).update({anulado:true,anuladoAt:Date.now()});toast("Registro anulado")}catch(e){toast(errMsg(e))}
+      });
+    }
+  }
+};
+
+/* ---------- vista: editor ---------- */
+function bindInputs(root,obj,onChange){
+  root.addEventListener("input",e=>{const k=e.target.dataset.k;if(!k)return;let v=e.target.value;if(e.target.type==="number"||e.target.dataset.num)v=+v;setPath(obj,k,v);onChange&&onChange(k,e.target)});
+  root.addEventListener("change",e=>{const t=e.target;if(t.dataset.k&&t.tagName==="SELECT"){let v=t.value;if(t.dataset.num)v=+v;setPath(obj,t.dataset.k,v);onChange&&onChange(t.dataset.k,t)}
+    if(t.dataset.ok){const[arr,i]=t.dataset.ok.split(".");obj[arr][+i].ok=+t.value}});
+}
+function pcSelect(k,v,opt){return`<select data-k="${k}" data-num="1">${opt?`<option value=""${v==null?" selected":""}>—</option>`:""}${[1,2,4].map(n=>`<option value="${n}"${+v===n?" selected":""}>${n}</option>`).join("")}</select>`}
+const AI_RULES=`FORMATO HTP (respétalo exactamente):
+- Instructivo de trabajo (IT) con estas 13 secciones y estos títulos: 1. Objetivo, 2. Alcance, 3. Documentos de referencia, 4. Definiciones, 5. Responsabilidades, 6. Recursos y competencias, 7. Riesgos críticos y controles, 8. Desarrollo de la actividad, 9. Control de desviaciones y salidas no conformes, 10. Registros, 11. Seguimiento y medición, 12. Anexos, 13. Control de cambios.
+- En "texto": subsecciones en su propia línea ("6.1 Equipos y materiales", "6.2 Elementos de protección personal", "6.3 Competencias requeridas", "7.1 Riesgos críticos presentes", "7.2 Controles obligatorios", "8.1 Secuencia general", "8.2 Límites de velocidad" si aplica, "8.3 Descripción detallada"); viñetas con "- "; las tablas como líneas con celdas separadas por " | " y la primera línea como encabezado. Tablas esperadas: 3 (Documento | Aplicación en esta IT), 4 (Término | Definición), 5 (Cargo | Responsabilidades), 6.3 (Cargo | Requisito de competencia), 7.1 (Código | Riesgo crítico), 7.2 (N° | Control (preventivo / mitigador) | Riesgo), 8.1 (Paso | Etapa | Responsable | Registro / punto de control), 9 (Situación | Acción inmediata), 10 (Registro | Responsable | Ubicación | Retención | Código), 11 (Indicador | Fórmula | Meta | Frecuencia), 13 (Versión | Fecha | Descripción del cambio | Aprobó).
+- En 8.3 cada paso es una línea "Paso N: Título" seguida de viñetas "- " con las acciones.
+- Riesgos críticos HTP con su código entre paréntesis: (CS) caída de carga, aplastamiento, atrapamiento entre carga y accesorios de izaje; (VH) contacto entre hombre y vehículos de carga; (AC) exposición a agentes, condiciones ambientales o malas condiciones de trabajo; (IP) mala ejecución, falta de conocimiento, instrucción deficiente.
+- MIPER según DS 44 y Guía ISP (método VEP = P × C). Cada fila: etapa (con pasos de la IT entre paréntesis), puestos expuestos, peligro con prefijos GEMA en líneas separadas ("G: ..." gente, "E: ..." equipo, "M: ..." material, "A: ..." ambiente), riesgo con código ISP entre paréntesis (ej. "Atropello o golpes con vehículos (I1)", "Choque, colisión o volcamiento (I2)", "Caída de objetos (B2)", "Atrapamiento (B1)", "Caídas al mismo nivel (A1)", "Caídas a distinto nivel (A2)"), daño probable, P y C iniciales (solo 1, 2 o 4), medidas de control en líneas con la jerarquía DS 44 ("Eliminación: ...", "Sustitución: ...", "Ingeniería: ...", "Administrativa: ...", "EPP: ...") citando el paso o control de la IT, P y C residuales (la residual nunca mayor que la inicial) y responsable. Si un riesgo no se evalúa con P × C (ej. psicosocial), deja p, c, pr y cr en null y escribe el criterio en "evalIni" y "evalRes".
+- Evaluación del instructivo: 10 afirmaciones de Verdadero o Falso, cerca de la mitad falsas; una afirmación falsa cambia un dato concreto de la IT (una velocidad, una distancia, quién autoriza). Cada una con "just": la justificación citando el paso o la sección ("Paso 2: en el terminal marítimo el límite es 20 km/h."). "ok": 0 si es Verdadera, 1 si es Falsa.
+- Evaluación de la MIPER: 5 afirmaciones V/F sobre peligros, riesgos y controles de la matriz, con el mismo formato.`;
+const AI_SHAPE=`{"codigo":"IT-00-000","titulo":"","version":"01","versionAnterior":"","proceso":"","subproceso":"","actividad":"","sistemas":"Calidad · Ambiente · Energía · Seguridad y Salud en el Trabajo","tarea":"","tipoTarea":"Rutinaria","lugares":"",
+"secciones":[{"titulo":"1. Objetivo","texto":"..."}],
+"matriz":[{"etapa":"","puestos":"","peligro":"G: ...\\nE: ...","riesgo":"","dano":"","p":2,"c":4,"evalIni":"","control":"Ingeniería: ...\\nAdministrativa: ...\\nEPP: ...","pr":1,"cr":4,"evalRes":"","responsable":""}],
+"preguntasProc":[{"tipo":"vf","q":"","ok":0,"just":""}],
+"preguntasMat":[{"tipo":"vf","q":"","ok":1,"just":""}]}`;
+function draftFromAI(r,def={}){
+  const d=blankProc();const str=v=>v==null?"":String(v);
+  d.codigo=def.codigo||str(r.codigo);d.titulo=str(r.titulo||def.titulo);d.area=def.area||d.area;
+  ["version","versionAnterior","proceso","subproceso","actividad","sistemas","tarea","tipoTarea","lugares"].forEach(k=>{if(r[k])d[k]=str(r[k])});
+  if(r.firmasDoc&&typeof r.firmasDoc==="object")FIRMAS_K.forEach(([k])=>{const x=r.firmasDoc[k];if(x)["nombre","cargo","fecha"].forEach(f=>{if(x[f])d.firmasDoc[k][f]=str(x[f])})});
+  if(Array.isArray(r.secciones)&&r.secciones.length)d.secciones=r.secciones.filter(s=>s&&s.titulo).map(s=>({titulo:str(s.titulo),texto:str(s.texto)}));
+  d.matriz=(Array.isArray(r.matriz)?r.matriz:[]).map(x=>({etapa:str(x.etapa||x.actividad),puestos:str(x.puestos),peligro:str(x.peligro),riesgo:str(x.riesgo),dano:str(x.dano),p:pcOpt(x.p),c:pcOpt(x.c),evalIni:str(x.evalIni),control:str(x.control),pr:pcOpt(x.pr),cr:pcOpt(x.cr),evalRes:str(x.evalRes),responsable:str(x.responsable)}));
+  d.preguntasProc=cleanQs(r.preguntasProc);d.preguntasMat=cleanQs(r.preguntasMat);
+  return d;
+}
+views.editor={
+  mount(el,id){
+    if(!S.canEdit){el.innerHTML=`<div class="empty"><b>Solo los editores pueden crear o modificar instructivos.</b>Pida al Jefe de Operaciones acceso de editor. <a href="#procedimientos">Volver</a></div>`;return}
+    if(id){const p=procById(id);if(!p){el.innerHTML=`<div class="empty"><b>${S.loaded?"Instructivo no encontrado.":"Cargando…"}</b></div>`;this.pending=id;return}
+      if(!S.draft||S.draft.id!==id){S.draft=Object.assign(blankProc(),clone(p));}}
+    else if(!S.draft||S.draft.id)S.draft=blankProc();
+    const d=S.draft;d.firmasDoc=withFirmas(d);d.matriz=(d.matriz||[]).map(normRow);d.preguntasProc=padQs(d.preguntasProc);d.preguntasMat=padQs(d.preguntasMat);
+    this.pending=null;this.origVersion=id?procById(id).version:null;this.el=el;this.render();
+  },
+  update(){if(this.pending&&procById(this.pending))this.mount($("#view"),this.pending)},
+  render(){
+    const el=this.el,d=S.draft;const inp=(k,lbl,ph="",span="")=>`<label class="f"${span?` style="grid-column:${span}"`:""}>${lbl}<input type="text" id="e-${k.replace(/\W/g,"-")}" data-k="${k}" value="${esc(k.split(".").reduce((o,x)=>o&&o[x],d)??"")}" placeholder="${esc(ph)}"></label>`;
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / ${d.id?"Editar":"Nuevo"}</p><h1>${d.id?esc(d.titulo||"Editar instructivo"):"Nuevo instructivo de trabajo"}</h1>
+      <p class="lede">Formato HTP: identificación, 13 secciones, MIPER DS 44 y evaluación V/F. Guarde como borrador o publique como vigente.</p></div>
+      <div class="actions"><button class="btn" id="e-word">IT en Word</button><button class="btn" id="e-evw">Evaluación en Word</button>${d.id?'<button class="btn danger" id="e-del">Eliminar</button>':""}<button class="btn primary" id="e-save">Guardar</button></div></section>
+    <div class="stack" id="ed">
+      <section class="panel"><h2>Identificación del documento</h2><div class="grid">
+        ${inp("codigo","Código","IT-96-302")}${inp("titulo","Título","Traslado y Descarga de Productos de Acero","span 2")}
+        ${inp("version","Versión","03")}${inp("versionAnterior","Versión anterior","Rev. anterior – 29/05/2025")}
+        <label class="f">Área<select id="e-area" data-k="area">${AREAS.map(a=>`<option${a===d.area?" selected":""}>${esc(a)}</option>`).join("")}${AREAS.includes(d.area)?"":`<option selected>${esc(d.area)}</option>`}</select></label>
+        <label class="f">Estado<select id="e-est" data-k="estado"><option value="borrador"${d.estado==="borrador"?" selected":""}>Borrador (no visible)</option><option value="vigente"${d.estado!=="borrador"?" selected":""}>Vigente (se difunde)</option></select></label>
+        <label class="f">Nota de aprobación (%)<input type="number" id="e-apr" data-k="aprobacion" min="0" max="100" value="${esc(d.aprobacion)}"></label>
+        ${inp("proceso","Proceso","Descarga de break bulk")}${inp("subproceso","Subproceso","Descarga de barras")}
+        ${inp("actividad","Actividad","","1/-1")}${inp("sistemas","Sistemas de gestión","","1/-1")}
+      </div><p class="hint" id="verhint" style="margin-top:8px" ${this.origVersion?"":"hidden"}>Si cambia la versión, la cobertura se reinicia: el personal debe volver a firmar.</p></section>
+      <section class="panel"><h2>Elaboró · Revisó · Aprobó</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+        ${FIRMAS_K.map(([k,l])=>`<div class="stack" style="gap:8px"><b class="small">${l}</b>${inp(`firmasDoc.${k}.nombre`,"Nombre")}${inp(`firmasDoc.${k}.cargo`,"Cargo")}${inp(`firmasDoc.${k}.fecha`,"Fecha","dd/mm/aaaa")}</div>`).join("")}</div></section>
+      <section class="panel"><h2>Documento original <small>PDF, opcional</small></h2>
+        <div class="row">${d.docAssetId?`<a class="btn" href="${esc(assetHref(d))}" target="_blank" rel="noopener">${esc(d.docNombre||"Ver archivo")}</a><button class="btn ghost" id="e-rmdoc">Quitar</button>`:'<span class="muted small">Sin archivo adjunto.</span>'}<label class="btn" for="e-file">Subir archivo</label><input type="file" id="e-file" accept=".pdf,application/pdf,image/*" hidden></div>
+        ${S.assets?"":`<p class="hint" style="margin-top:6px">${FB?"Para adjuntar archivos active Firebase Storage (usarStorage: true en firebase-config.js).":"La carga de archivos no está disponible en esta vista."}</p>`}</section>
+      <section class="panel"><h2>Contenido del instructivo</h2><p class="hint" style="margin-bottom:10px">Viñetas: línea que empieza con “- ”. Tablas: celdas separadas por “ | ”, la primera línea es el encabezado. Subsecciones (6.1, 8.3, Paso 1:) en su propia línea.</p><div class="stack" id="secs"></div><div class="row" style="margin-top:12px"><button class="btn" id="add-sec">Agregar sección</button></div></section>
+      <section class="panel"><h2>MIPER <small>Matriz de identificación de peligros y evaluación de riesgos · DS 44</small></h2>
+        <div class="grid" style="margin-bottom:12px">${inp("tarea","Tarea","","span 2")}${inp("tipoTarea","Tipo de tarea","Rutinaria")}${inp("lugares","Lugares específicos","","1/-1")}</div>
+        <details style="margin-bottom:12px"><summary class="small" style="cursor:pointer;font-weight:600">Pegar filas desde Excel</summary>
+          <p class="hint" style="margin:6px 0">Columnas en este orden: Etapa · Puestos expuestos · Peligro (GEMA) · Riesgo (código ISP) · Daño probable · P inicial · C inicial · Medidas de control · P residual · C residual · Responsable.</p>
+          <textarea id="mx-paste" placeholder="Pegue aquí las filas copiadas"></textarea><div class="row" style="margin-top:6px"><button class="btn sm" id="mx-import">Agregar filas</button></div></details>
+        <div id="mx"></div><div class="row" style="margin-top:12px"><button class="btn" id="add-row">Agregar fila</button></div></section>
+      <section class="panel"><h2>Evaluación</h2>
+        <div class="ai row" style="margin-bottom:16px"><span class="sp small">Genere 10 afirmaciones V/F del instructivo y 5 de la MIPER, con su justificación, a partir del contenido. Revíselas antes de publicar.</span><button class="btn orange" id="ai-q" ${S.sample?"":"disabled"}>Generar evaluación con IA</button></div>
+        <h3 style="margin-bottom:8px">Instructivo</h3><div class="stack" id="qp"></div><div class="row" style="margin:10px 0 20px"><button class="btn" data-addq="preguntasProc" data-t="vf">Agregar afirmación V/F</button><button class="btn" data-addq="preguntasProc" data-t="alt">Agregar pregunta de alternativas</button></div>
+        <h3 style="margin-bottom:8px">MIPER</h3><div class="stack" id="qm"></div><div class="row" style="margin-top:10px"><button class="btn" data-addq="preguntasMat" data-t="vf">Agregar afirmación V/F</button><button class="btn" data-addq="preguntasMat" data-t="alt">Agregar pregunta de alternativas</button></div></section>
+    </div>`;
+    this.renderSecs();this.renderMx();this.renderQs("preguntasProc","qp");this.renderQs("preguntasMat","qm");
+    const ed=$("#ed",el);
+    bindInputs(ed,d,(k,t)=>{
+      if(k==="version"&&this.origVersion)$("#verhint").hidden=String(t.value)===String(this.origVersion);
+      const m=/^matriz\.(\d+)\.(p|c|pr|cr)$/.exec(k);if(m){const i=+m[1],r=d.matriz[i];if(t.value==="")r[m[2]]=null;$(`#vi-${i}`).innerHTML=vepCell(r.p,r.c,r.evalIni);$(`#vr-${i}`).innerHTML=vepCell(r.pr,r.cr,r.evalRes)}
+    });
+    ed.addEventListener("change",e=>{const t=e.target;if(!t.dataset.qt)return;const[a,i]=t.dataset.qt.split(".");const q=d[a][+i];q.tipo=t.value;if(q.tipo==="vf"){q.ops=["Verdadero","Falso"];q.ok=q.ok?1:0}else{q.ops=["","","",""];q.ok=0}this.renderQs(a,a==="preguntasProc"?"qp":"qm")});
+    $("#add-sec",el).onclick=()=>{d.secciones.push({titulo:`${d.secciones.length+1}. Nueva sección`,texto:""});this.renderSecs()};
+    $("#add-row",el).onclick=()=>{d.matriz.push(blankRow());this.renderMx()};
+    $("#mx-import",el).onclick=()=>{const t=$("#mx-paste").value.trim();if(!t)return;let n=0;
+      t.split(/\r?\n/).forEach(l=>{const c=l.split("\t");if(c.length<4)return;if(/etapa/i.test(c[0])&&/puesto/i.test(c[1]||""))return;
+        const ini=c[5],res=c[8];d.matriz.push({etapa:c[0]||"",puestos:c[1]||"",peligro:c[2]||"",riesgo:c[3]||"",dano:c[4]||"",p:pcOpt(ini),c:pcOpt(c[6]),evalIni:pcOpt(ini)==null?(ini||""):"",control:c[7]||"",pr:pcOpt(res),cr:pcOpt(c[9]),evalRes:pcOpt(res)==null?(res||""):"",responsable:c[10]||""});n++});
+      $("#mx-paste").value="";this.renderMx();toast(n?`${n} filas agregadas`:"No se reconocieron filas. Copie con tabulaciones desde Excel.")};
+    $$("[data-addq]",el).forEach(b=>b.onclick=()=>{d[b.dataset.addq].push(b.dataset.t==="vf"?{tipo:"vf",q:"",ops:["Verdadero","Falso"],ok:0,just:""}:{tipo:"alt",q:"",ops:["","","",""],ok:0,just:""});this.renderQs(b.dataset.addq,b.dataset.addq==="preguntasProc"?"qp":"qm")});
+    $("#e-file",el).onchange=async e=>{const f=e.target.files[0];if(!f||!S.assets)return;toast("Subiendo archivo…");try{const r=await S.assets.upload(f);d.docAssetId=r.id;d.docNombre=f.name;d.docUrl=FB?r.url:null;this.render();toast("Archivo cargado. Recuerde guardar.")}catch(err){toast(errMsg(err))}};
+    $("#e-rmdoc",el)&&($("#e-rmdoc",el).onclick=()=>{d.docAssetId=null;d.docNombre=null;d.docUrl=null;this.render()});
+    $("#e-word",el).onclick=()=>downloadWord(this.snapshot());
+    $("#e-evw",el).onclick=()=>downloadEvalWord(this.snapshot());
+    $("#ai-q",el).onclick=()=>this.aiQuestions();
+    $("#e-save",el).onclick=()=>this.save();
+    $("#e-del",el)&&($("#e-del",el).onclick=async e=>{const b=e.currentTarget;if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="¿Eliminar definitivamente?";return}
+      try{await S.db.doc(`procedimientos/${d.id}`).delete();S.draft=null;toast("Instructivo eliminado");location.hash="#procedimientos"}catch(err){toast(errMsg(err))}});
+  },
+  renderSecs(){const d=S.draft;$("#secs").innerHTML=d.secciones.map((s,i)=>`<div class="sec-ed"><div class="row"><input type="text" id="sec-t-${i}" data-k="secciones.${i}.titulo" value="${esc(s.titulo)}" style="font-weight:600;flex:1"><button class="btn sm ghost" data-rmsec="${i}">Quitar</button></div><textarea id="sec-x-${i}" data-k="secciones.${i}.texto" rows="${Math.min(18,Math.max(4,String(s.texto).split("\n").length+1))}">${esc(s.texto)}</textarea></div>`).join("")||'<div class="empty">Sin secciones.</div>';
+    $$("[data-rmsec]").forEach(b=>b.onclick=()=>{d.secciones.splice(+b.dataset.rmsec,1);this.renderSecs()})},
+  renderMx(){const d=S.draft;const ta=(i,k,w)=>`<textarea id="mx-${k}-${i}" data-k="matriz.${i}.${k}" style="min-width:${w}px">${esc(d.matriz[i][k])}</textarea>`;
+    $("#mx").innerHTML=d.matriz.length?`<div class="tbl-wrap mx"><table><thead><tr><th>N°</th><th>Etapa / pasos IT</th><th>Puestos expuestos</th><th>Peligro (GEMA)</th><th>Riesgo (ISP)</th><th>Daño probable</th><th>P</th><th>C</th><th>VEP inicial</th><th>Medidas de control (DS 44)</th><th>P res.</th><th>C res.</th><th>VEP residual</th><th>Responsable</th><th></th></tr></thead><tbody>
+    ${d.matriz.map((r,i)=>`<tr><td class="code">${i+1}</td><td>${ta(i,"etapa",140)}</td><td>${ta(i,"puestos",120)}</td><td>${ta(i,"peligro",170)}</td><td>${ta(i,"riesgo",140)}</td><td>${ta(i,"dano",120)}</td><td>${pcSelect(`matriz.${i}.p`,r.p,true)}</td><td>${pcSelect(`matriz.${i}.c`,r.c,true)}</td><td id="vi-${i}">${vepCell(r.p,r.c,r.evalIni)}</td><td>${ta(i,"control",260)}</td><td>${pcSelect(`matriz.${i}.pr`,r.pr,true)}</td><td>${pcSelect(`matriz.${i}.cr`,r.cr,true)}</td><td id="vr-${i}">${vepCell(r.pr,r.cr,r.evalRes)}</td><td>${ta(i,"responsable",120)}</td><td><button class="btn sm ghost" data-rmrow="${i}">Quitar</button></td></tr>`).join("")}</tbody></table></div><p class="hint" style="margin-top:6px">Si un riesgo no se evalúa con P × C (por ejemplo, psicosocial), deje P y C en “—” y escriba el criterio en la celda VEP desde la planilla Excel.</p>`:'<div class="empty"><b>Sin filas.</b>Agregue riesgos uno a uno o péguelos desde Excel.</div>';
+    $$("[data-rmrow]").forEach(b=>b.onclick=()=>{d.matriz.splice(+b.dataset.rmrow,1);this.renderMx()})},
+  renderQs(arr,box){const d=S.draft;
+    $("#"+box).innerHTML=d[arr].length?d[arr].map((q,i)=>`<div class="qedit"><div class="row"><b class="code">${i+1}</b><select data-qt="${arr}.${i}" id="${arr}-t-${i}" style="width:auto"><option value="vf"${q.tipo==="vf"?" selected":""}>V / F</option><option value="alt"${q.tipo!=="vf"?" selected":""}>Alternativas</option></select><input type="text" id="${arr}-q-${i}" data-k="${arr}.${i}.q" value="${esc(q.q)}" placeholder="${q.tipo==="vf"?"Afirmación":"Enunciado de la pregunta"}" style="flex:1;font-weight:600;min-width:200px"><button class="btn sm ghost" data-rmq="${arr}.${i}">Quitar</button></div>
+      ${q.tipo==="vf"?`<div class="row">${["Verdadero","Falso"].map((o,j)=>`<label class="op row" style="gap:6px"><input type="radio" name="${arr}-ok-${i}" id="${arr}-ok-${i}-${j}" value="${j}" data-ok="${arr}.${i}" ${q.ok===j?"checked":""}>${o}</label>`).join("")}<span class="hint">Marque la respuesta correcta.</span></div>`
+      :q.ops.map((o,j)=>`<div class="op"><input type="radio" name="${arr}-ok-${i}" id="${arr}-ok-${i}-${j}" value="${j}" data-ok="${arr}.${i}" ${q.ok===j?"checked":""} title="Marcar como correcta"><input type="text" id="${arr}-o-${i}-${j}" data-k="${arr}.${i}.ops.${j}" value="${esc(o)}" placeholder="Alternativa ${"abcd"[j]}"></div>`).join("")}
+      <input type="text" id="${arr}-j-${i}" data-k="${arr}.${i}.just" value="${esc(q.just)}" placeholder="Justificación para la pauta del relator (ej. Paso 2: …)"></div>`).join(""):'<div class="empty">Sin preguntas.</div>';
+    $$(`#${box} [data-rmq]`).forEach(b=>b.onclick=()=>{const[a,i]=b.dataset.rmq.split(".");d[a].splice(+i,1);this.renderQs(arr,box)})},
+  snapshot(){const d=S.draft;return Object.assign({},d,{preguntasProc:d.preguntasProc.map(compactQ),preguntasMat:d.preguntasMat.map(compactQ)})},
+  async aiQuestions(){
+    const d=S.draft,b=$("#ai-q");if(!S.sample)return;
+    b.disabled=true;b.innerHTML='<span class="spin"></span> Generando…';
+    const prompt=`Eres instructor de prevención de riesgos en Huachipato Terminal Portuario (HTP). Crea la evaluación de este instructivo de trabajo y su MIPER para trabajadores operativos (conductores, operadores, personal portuario, jefes de turno).
+Reglas: español de Chile, claro y concreto; basada SOLO en el contenido entregado.
+- preguntasProc: 10 afirmaciones de Verdadero o Falso sobre el instructivo, cerca de la mitad falsas; una afirmación falsa cambia un dato concreto (una velocidad, una distancia, quién autoriza). "ok": 0 si es Verdadera, 1 si es Falsa. "just": justificación citando el paso o la sección.
+- preguntasMat: 5 afirmaciones V/F sobre peligros, riesgos y controles de la MIPER, mismo formato.
+Devuelve SOLO JSON: {"preguntasProc":[{"tipo":"vf","q":"...","ok":0,"just":"Paso 2: ..."}],"preguntasMat":[...]}
+
+INSTRUCTIVO: ${d.codigo} ${d.titulo} (Versión ${d.version})
+${d.secciones.map(s=>s.titulo+"\n"+s.texto).join("\n\n").slice(0,30000)}
+
+MIPER:
+${d.matriz.map((r,i)=>`${i+1}. Etapa: ${r.etapa} | Peligro: ${r.peligro} | Riesgo: ${r.riesgo} | VEP inicial: ${r.p&&r.c?r.p*r.c:r.evalIni} | Controles: ${r.control} | Responsable: ${r.responsable}`).join("\n").slice(0,12000)}`;
+    try{const r=await S.sample.json(prompt,{modelTier:"default"});const qp=cleanQs(r.preguntasProc),qm=cleanQs(r.preguntasMat);
+      if(!qp.length&&!qm.length)throw{message:"La IA no devolvió preguntas válidas. Agregue más contenido e intente de nuevo."};
+      d.preguntasProc.push(...padQs(qp));d.preguntasMat.push(...padQs(qm));this.renderQs("preguntasProc","qp");this.renderQs("preguntasMat","qm");toast(`${qp.length+qm.length} afirmaciones agregadas. Revíselas antes de guardar.`)}
+    catch(e){toast(e.code==="not_granted"?"No se autorizó el uso de IA en esta página.":e.code==="rate_limited"?"Límite de uso alcanzado. Intente más tarde.":errMsg(e))}
+    b.disabled=false;b.textContent="Generar evaluación con IA";
+  },
+  async save(){
+    const d=S.draft;if(!String(d.titulo).trim()){toast("Ingrese el título del instructivo");$("#e-titulo").focus();return}
+    const bad=[...d.preguntasProc,...d.preguntasMat].findIndex(q=>!String(q.q).trim()||(q.tipo!=="vf"&&(q.ops.filter(o=>String(o).trim()).length<2||!String(q.ops[q.ok]||"").trim())));
+    if(bad>=0){toast("Hay preguntas incompletas: cada una necesita enunciado; las de alternativas, al menos 2 opciones y la correcta marcada.");return}
+    if(d.estado!=="borrador"&&!(d.preguntasProc.length||d.preguntasMat.length))toast("Aviso: el instructivo vigente no tiene evaluación; solo se podrá difundir.");
+    const id=d.id||nid();const b=$("#e-save");b.disabled=true;const str=v=>String(v??"").trim();
+    const doc={codigo:str(d.codigo),titulo:str(d.titulo),version:str(d.version)||"01",versionAnterior:str(d.versionAnterior),area:d.area,estado:d.estado,aprobacion:Math.min(100,Math.max(0,+d.aprobacion||80)),
+      proceso:str(d.proceso),subproceso:str(d.subproceso),actividad:str(d.actividad),sistemas:str(d.sistemas),tarea:str(d.tarea),tipoTarea:str(d.tipoTarea),lugares:str(d.lugares),firmasDoc:withFirmas(d),
+      secciones:d.secciones.filter(s=>s.titulo||s.texto),matriz:d.matriz.map(r=>({...normRow(r),p:pcOpt(r.p),c:pcOpt(r.c),pr:pcOpt(r.pr),cr:pcOpt(r.cr)})),
+      preguntasProc:d.preguntasProc.map(compactQ),preguntasMat:d.preguntasMat.map(compactQ),
+      docAssetId:d.docAssetId||null,docNombre:d.docNombre||null,docUrl:d.docUrl||null,updatedAt:Date.now(),updatedBy:S.uid,createdAt:d.createdAt||Date.now()};
+    try{await S.db.doc(`procedimientos/${id}`).set(doc);S.draft=null;toast(doc.estado==="borrador"?"Borrador guardado":"Instructivo publicado como vigente");location.hash="#p-"+id}
+    catch(e){toast(errMsg(e));b.disabled=false}
+  }
+};
+
+/* ---------- vista: generador ---------- */
+const HTP_CTX=`Huachipato Terminal Portuario (HTP), Grupo CAP, terminal marítimo en Bahía San Vicente, Talcahuano, que descarga y embarca graneles (clinker, caliza, carbón) y carga general break bulk (acero en barras y bobinas). En las maniobras participan el jefe de turno HTP, operadores mantenedores, operadores de grúa, la empresa de muellaje Reloncaví (supervisor), movilizadores y capataz de Mabe, y conductores; antes de cada turno se hace la VIT (verificación de inicio de turno). Los instructivos se alinean con ISO 9001:2015, ISO 14001, ISO 50001 e ISO 45001, la Ley 16.744 y el DS 44.`;
+views.generador={
+  mount(el){
+    S.gen??={titulo:"",area:AREAS[0],ideas:"",codigo:"",proceso:"",subproceso:""};
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Redacción asistida</p><h1>Generador de instructivos y MIPER</h1>
+      <p class="lede">Escriba las ideas de la tarea en sus propias palabras: equipos, pasos, personal, velocidades, condiciones de detención. La IA redacta la IT con el formato HTP de 13 secciones, la MIPER según DS 44 y la evaluación de 10 afirmaciones V/F. Usted la revisa y la publica.</p></div></section>
+      ${S.canEdit?"":`<div class="empty" style="margin-bottom:16px"><b>Puede generar y descargar el documento.</b>Para publicarlo en la biblioteca se requiere acceso de editor.</div>`}
+      <div class="two"><section class="panel stack" id="g">
+        <div class="grid"><label class="f" style="grid-column:1/-1">Nombre de la tarea<input type="text" id="g-tit" data-k="titulo" value="${esc(S.gen.titulo)}" placeholder="Carguío de clinker a camiones desde tolva ecológica"></label>
+        <label class="f">Código (opcional)<input type="text" id="g-cod" data-k="codigo" value="${esc(S.gen.codigo)}" placeholder="IT-96-303"></label>
+        <label class="f">Área<select id="g-area" data-k="area">${AREAS.map(a=>`<option${a===S.gen.area?" selected":""}>${esc(a)}</option>`).join("")}</select></label>
+        <label class="f">Proceso<input type="text" id="g-pro" data-k="proceso" value="${esc(S.gen.proceso)}" placeholder="Descarga de graneles"></label>
+        <label class="f">Subproceso<input type="text" id="g-sub" data-k="subproceso" value="${esc(S.gen.subproceso)}" placeholder="Descarga de clinker"></label></div>
+        <label class="f">Ideas, pasos y condiciones<textarea id="g-ideas" data-k="ideas" rows="12" placeholder="Ejemplo:
+- Participan jefe de turno HTP, operador de cargador frontal, conductores de camión.
+- VIT antes de iniciar, revisar viento y estado de la tolva.
+- Velocidad máxima en muelle 20 km/h.
+- Nadie bajo la tolva durante el carguío; conductor fuera de la cabina en zona segura.
+- Detener si hay emisión de polvo visible fuera del área.">${esc(S.gen.ideas)}</textarea></label>
+        <div class="row"><button class="btn orange" id="g-run" ${S.sample?"":"disabled"}>Generar IT, MIPER y evaluación</button><span class="small muted" id="g-st"></span></div>
+        ${S.sample?"":'<p class="hint">La IA no está disponible en esta vista.</p>'}
+      </section>
+      <section class="panel"><h2>Qué se genera</h2><div class="stack small">
+        <p><b>Instructivo de trabajo</b> con identificación del documento y las 13 secciones del formato HTP, incluidas las tablas de referencias, responsabilidades, riesgos críticos (CS, VH, AC, IP), secuencia de pasos, registros e indicadores.</p>
+        <p><b>MIPER DS 44</b> con peligros GEMA, riesgos con código ISP, evaluación inicial y residual (VEP = P × C) y controles según la jerarquía.</p>
+        <p><b>Evaluación</b> de 10 afirmaciones V/F de la IT y 5 de la MIPER, con la pauta de corrección.</p>
+        <p class="muted">El resultado se abre en el editor como borrador. Desde ahí puede corregirlo, descargar la IT y la evaluación en Word y publicarlo.</p></div></section></div>`;
+    bindInputs($("#g",el),S.gen);
+    $("#g-run",el).onclick=()=>this.run();
+  },
+  async run(){
+    const g=S.gen;if(!g.titulo.trim()||g.ideas.trim().length<20){toast("Escriba el nombre de la tarea y al menos algunas ideas (20 caracteres o más).");return}
+    const b=$("#g-run"),st=$("#g-st");b.disabled=true;b.innerHTML='<span class="spin"></span> Redactando…';const t0=Date.now();const tick=setInterval(()=>{st.textContent=`${Math.round((Date.now()-t0)/1000)} s`},1000);
+    const prompt=`Eres especialista en prevención de riesgos y operaciones portuarias en Chile. Redactas para ${HTP_CTX}
+
+Redacta un instructivo de trabajo seguro, formal y operativo, en español de Chile, a partir de las ideas del usuario. Desarrolla las ideas con pasos concretos y verificables, sin inventar datos técnicos (cifras, capacidades, nombres de equipos) que el usuario no entregó; si falta un dato importante, escribe "[completar: ...]". No inventes números de artículo de normas.
+
+${AI_RULES}
+
+Devuelve SOLO JSON con esta forma:
+${AI_SHAPE}
+
+TAREA: ${g.titulo}
+CÓDIGO: ${g.codigo||"(proponer con formato IT-96-3XX)"}
+PROCESO: ${g.proceso||"(proponer)"} · SUBPROCESO: ${g.subproceso||"(proponer)"} · ÁREA: ${g.area}
+IDEAS DEL USUARIO:
+${g.ideas}`;
+    try{
+      const r=await S.sample.json(prompt,{modelTier:"complex"});
+      const d=draftFromAI(r,{codigo:g.codigo,titulo:g.titulo,area:g.area});if(g.proceso)d.proceso=g.proceso;if(g.subproceso)d.subproceso=g.subproceso;
+      S.draft=d;clearInterval(tick);
+      if(S.canEdit){toast("Borrador generado. Revíselo en el editor.");location.hash="#nuevo"}
+      else{downloadWord(d);b.disabled=false;b.textContent="Generar IT, MIPER y evaluación";st.textContent="Documento listo para descargar."}
+    }catch(e){clearInterval(tick);st.textContent="";b.disabled=false;b.textContent="Generar IT, MIPER y evaluación";
+      toast(e.code==="not_granted"?"No se autorizó el uso de IA en esta página.":e.code==="rate_limited"?"Límite de uso alcanzado. Intente más tarde.":e.code==="invalid_json"?"La respuesta llegó incompleta. Intente de nuevo con ideas más acotadas.":errMsg(e))}
+  }
+};
+
+/* ---------- vista: evaluar ---------- */
+function newEv(pid){return{pid:pid||"",modo:"completa",step:0,w:{nombre:"",rut:"",cargo:"",empresa:"HTP",turno:TURNOS[0],relator:S.me&&S.me.name||""},procLeido:false,matLeida:false,ansP:{},ansM:{},resP:null,resM:null,intentosP:1,intentosM:1,saved:false}}
+function evSteps(ev,p){const s=["Trabajador","Instructivo","MIPER"];if(ev.modo==="completa"){if((p?.preguntasProc||[]).length)s.push("Evaluación IT");if((p?.preguntasMat||[]).length)s.push("Evaluación MIPER")}s.push("Firma");return s}
+views.evaluar={
+  mount(el){S.ev??=newEv();this.el=el;this.render()},
+  update(){const ev=S.ev;if(ev&&ev.step===0&&!$("#view input:focus, #view select:focus"))this.render()},
+  render(){
+    const el=this.el,ev=S.ev,p=procById(ev.pid);const steps=evSteps(ev,p);const st=steps[Math.min(ev.step,steps.length-1)];
+    if(ev.saved){el.innerHTML=`<section class="panel stack" style="max-width:640px"><p class="eyebrow">Registro guardado</p><h1>Firma registrada</h1>
+      <p>${esc(ev.w.nombre)} quedó registrado en <b>${esc(p?.codigo||"")} ${esc(p?.titulo||"")}</b>.</p>${resultChips(ev.savedReg)}
+      <div class="row"><button class="btn primary" id="next-w">Registrar otro trabajador en este instructivo</button><a class="btn" href="#dashboard">Ver dashboard</a></div></section>`;
+      $("#next-w",el).onclick=()=>{const prev=ev;S.ev=newEv(prev.pid);S.ev.modo=prev.modo;S.ev.w.relator=prev.w.relator;S.ev.w.turno=prev.w.turno;this.render()};return}
+    const head=`<section class="pagehead"><div><p class="eyebrow">Difusión y evaluación</p><h1>${p?esc(p.titulo):"Registrar difusión"}</h1>${p?`<p class="lede code">${esc(p.codigo)} · Versión ${esc(p.version)}</p>`:""}</div></section>
+      <div class="steps">${steps.map((s,i)=>`<span class="${i<ev.step?"done":i===ev.step?"cur":""}">${s}</span>`).join("")}</div>`;
+    if(!S.db){el.innerHTML=head+`<div class="empty"><b>Sin conexión a la base de datos.</b>Inicie sesión para registrar firmas.</div>`;return}
+    let body="";
+    if(st==="Trabajador"){
+      const vig=vigentes();
+      body=`<section class="panel stack" id="evf">
+        <label class="f">Instructivo<select id="ev-p" data-k="pid"><option value="">Seleccione…</option>${vig.map(x=>`<option value="${esc(x.id)}"${x.id===ev.pid?" selected":""}>${esc(x.codigo)} · ${esc(x.titulo)} (v${esc(x.version)})</option>`).join("")}</select></label>
+        ${!vig.length?`<p class="hint">${S.loaded?"No hay instructivos vigentes.":"Cargando instructivos…"}</p>`:""}
+        <div class="row"><label class="check" style="flex:1;min-width:220px"><input type="radio" name="modo" value="completa" ${ev.modo==="completa"?"checked":""}><span><b>Difusión y evaluación</b><br><span class="hint">Lectura, prueba y firma</span></span></label>
+        <label class="check" style="flex:1;min-width:220px"><input type="radio" name="modo" value="difusion" ${ev.modo==="difusion"?"checked":""}><span><b>Solo difusión</b><br><span class="hint">Charla o VIT, con firma</span></span></label></div>
+        <h3>Datos del evaluado</h3>
+        <div class="grid">
+          <label class="f" style="grid-column:span 2">Nombre<input type="text" id="ev-n" data-k="w.nombre" list="dl-pers" value="${esc(ev.w.nombre)}" autocomplete="off"></label>
+          <label class="f">RUT<input type="text" id="ev-r" data-k="w.rut" value="${esc(ev.w.rut)}" placeholder="12.345.678-9"><span class="hint" id="rut-h"></span></label>
+          <label class="f">Cargo<input type="text" id="ev-c" data-k="w.cargo" value="${esc(ev.w.cargo)}" placeholder="Conductor de camión"></label>
+          <label class="f">Empresa<input type="text" id="ev-e" data-k="w.empresa" value="${esc(ev.w.empresa)}" list="dl-emp"></label>
+          <label class="f">Turno<select id="ev-t" data-k="w.turno">${TURNOS.map(t=>`<option${t===ev.w.turno?" selected":""}>${t}</option>`).join("")}</select></label>
+          <label class="f" style="grid-column:span 2">Relator<input type="text" id="ev-rel" data-k="w.relator" value="${esc(ev.w.relator)}" placeholder="Quien difunde y evalúa"></label>
+        </div>
+        <datalist id="dl-pers">${activos().map(x=>`<option value="${esc(x.nombre)}">${esc(fmtRut(x.rut))} · ${esc(x.cargo||"")}</option>`).join("")}</datalist>
+        <datalist id="dl-emp"><option>HTP</option><option>Reloncaví</option><option>Mabe</option><option>Transportista</option></datalist>
+      </section>`;
+    }
+    if(st==="Instructivo")body=`<section class="panel">${docBodyHTML(p)}</section><label class="check" style="margin-top:14px"><input type="checkbox" id="ck-p" ${ev.procLeido?"checked":""}><span>Declaro haber leído y comprendido el instructivo <b>${esc(p.codigo)} versión ${esc(p.version)}</b>.</span></label>`;
+    if(st==="MIPER")body=`<section class="panel">${matrixHTML(p.matriz,p)}</section><label class="check" style="margin-top:14px"><input type="checkbox" id="ck-m" ${ev.matLeida?"checked":""} ${(p.matriz||[]).length?"":"disabled"}><span>Declaro conocer los peligros, riesgos y medidas de control de la MIPER.</span></label>`;
+    if(st==="Evaluación IT")body=this.quiz("P",p.preguntasProc,ev.ansP,ev.resP,p.aprobacion);
+    if(st==="Evaluación MIPER")body=this.quiz("M",p.preguntasMat,ev.ansM,ev.resM,p.aprobacion);
+    if(st==="Firma"){
+      body=`<section class="panel stack"><div class="sum">
+        <div><span>Evaluado</span><b>${esc(ev.w.nombre)}</b></div><div><span>RUT</span><b>${esc(fmtRut(ev.w.rut))}</b></div><div><span>Cargo · Empresa</span><b>${esc(ev.w.cargo||"—")} · ${esc(ev.w.empresa||"—")}</b></div>
+        <div><span>Instructivo</span><b>${ev.procLeido?"Difundido":"No leído"}${ev.resP?` · ${ev.resP.buenas}/${ev.resP.total} ${ev.resP.ok?"aprobado":"reprobado"}`:""}</b></div>
+        <div><span>MIPER</span><b>${ev.matLeida?"Difundida":"No leída"}${ev.resM?` · ${ev.resM.buenas}/${ev.resM.total} ${ev.resM.ok?"aprobada":"reprobada"}`:""}</b></div>
+        <div><span>Relator · Fecha</span><b>${esc(ev.w.relator||"—")} · ${fmtDT(Date.now())}</b></div></div>
+        <div class="sigs"><div><p class="small" style="font-weight:600;margin-bottom:6px">Firma del evaluado</p><div class="sig"><canvas id="sig" width="900" height="300" aria-label="Firma del evaluado"></canvas><div class="base"></div><div class="lbl">${esc(ev.w.nombre||"Evaluado")}</div></div><button class="btn sm" id="sig-clear" style="margin-top:6px">Borrar</button></div>
+        <div><p class="small" style="font-weight:600;margin-bottom:6px">Firma del relator <span class="hint">(opcional)</span></p><div class="sig"><canvas id="sig2" width="900" height="300" aria-label="Firma del relator"></canvas><div class="base"></div><div class="lbl">${esc(ev.w.relator||"Relator")}</div></div><button class="btn sm" id="sig2-clear" style="margin-top:6px">Borrar</button></div></div>
+        <label class="check"><input type="checkbox" id="ck-f"><span>Confirmo que la información es correcta y firmo este registro de difusión${ev.modo==="completa"?" y evaluación":""}.</span></label>
+      </section>`;
+    }
+    const last=ev.step===steps.length-1;const isQ=st.startsWith("Evaluación");const res=st==="Evaluación IT"?ev.resP:ev.resM;
+    el.innerHTML=head+body+`<div class="navrow"><button class="btn" id="ev-back" ${ev.step===0?"hidden":""}>Anterior</button><span class="sp"></span>${isQ&&!res?`<button class="btn primary" id="ev-grade">Corregir evaluación</button>`:last?`<button class="btn primary" id="ev-save">Guardar registro firmado</button>`:`<button class="btn primary" id="ev-next">Continuar</button>`}</div>`;
+    this.wire(st,p,steps);
+  },
+  quiz(t,qs,ans,res,apr){
+    const min=Math.ceil(qs.length*(+apr||80)/100);const allVF=qs.every(q=>q.tipo==="vf");
+    return`<section class="panel stack"><p class="muted small">${allVF?"Lea cada afirmación y marque si es Verdadera (V) o Falsa (F).":"Responda cada pregunta."} Cada respuesta correcta vale 1 punto. Se aprueba con ${min} de ${qs.length}.</p>
+    ${res?`<div class="score ${res.ok?"ok":"bad"}"><b>${res.buenas} / ${res.total}</b><div><div style="font-weight:600">${res.ok?"Aprobado":"Reprobado"}</div><div class="small">${res.nota}% · intento ${t==="P"?S.ev.intentosP:S.ev.intentosM}</div></div>${res.ok?"":`<span class="sp"></span><button class="btn" id="retry">Repetir evaluación</button>`}</div>`:""}
+    ${qs.map((q,i)=>{const lbls=q.tipo==="vf"?["V · Verdadero","F · Falso"]:q.ops;return`<div class="q"><div class="qt">${i+1}. ${esc(q.q)}</div><div class="${q.tipo==="vf"?"vfrow":""}">${lbls.map((o,j)=>{let cls="";if(res){if(ans[i]===j&&j!==q.ok)cls="wrong";else if(j===q.ok&&(res.ok||ans[i]===j))cls="right"}
+      return`<label class="${cls}"><input type="radio" name="${t}-${i}" id="${t}-${i}-${j}" value="${j}" ${ans[i]===j?"checked":""} ${res?"disabled":""}><span>${esc(o)}</span></label>`}).join("")}</div>${res&&res.ok&&q.just?`<div class="small muted">${esc(q.just)}</div>`:""}</div>`}).join("")}</section>`;
+  },
+  wire(st,p,steps){
+    const el=this.el,ev=S.ev;
+    const go=d=>{ev.step=Math.max(0,Math.min(steps.length-1,ev.step+d));this.render();window.scrollTo(0,0)};
+    $("#ev-back",el)&&($("#ev-back",el).onclick=()=>go(-1));
+    if(st==="Trabajador"){
+      const rh=()=>{const v=ev.w.rut;const h=$("#rut-h");if(!h)return;h.textContent=!v?"":rutOk(v)?"RUT válido":"RUT no válido: se guardará como N° de documento";h.style.color=v&&!rutOk(v)?"var(--warn)":""};
+      bindInputs($("#evf",el),ev,(k)=>{if(k==="pid"){ev.procLeido=false;ev.matLeida=false;ev.ansP={};ev.ansM={};ev.resP=ev.resM=null;this.render();return}
+        if(k==="w.nombre"){const m=activos().find(x=>x.nombre===ev.w.nombre);if(m){ev.w.rut=fmtRut(m.rut);ev.w.cargo=m.cargo||"";ev.w.empresa=m.empresa||"";if(m.turno&&TURNOS.includes(m.turno))ev.w.turno=m.turno;$("#ev-r").value=ev.w.rut;$("#ev-c").value=ev.w.cargo;$("#ev-e").value=ev.w.empresa;$("#ev-t").value=ev.w.turno;rh()}}
+        if(k==="w.rut")rh()});
+      $$('input[name="modo"]',el).forEach(r=>r.onchange=()=>{ev.modo=r.value;this.render()});rh();
+    }
+    if(st==="Instructivo")$("#ck-p",el).onchange=e=>ev.procLeido=e.target.checked;
+    if(st==="MIPER")$("#ck-m",el).onchange=e=>ev.matLeida=e.target.checked;
+    if(st.startsWith("Evaluación")){
+      const isP=st==="Evaluación IT";const qs=isP?p.preguntasProc:p.preguntasMat;const ans=isP?ev.ansP:ev.ansM;
+      $("#ev-grade",el)&&($("#ev-grade",el).onclick=()=>{
+        const miss=qs.findIndex((q,i)=>ans[i]==null);if(miss>=0){toast(`Falta responder la pregunta ${miss+1}`);$(`[name="${isP?"P":"M"}-${miss}"]`)?.focus();return}
+        const buenas=qs.filter((q,i)=>ans[i]===q.ok).length;const nota=pct(buenas,qs.length);const res={nota,buenas,total:qs.length,ok:nota>=(+p.aprobacion||80)};
+        if(isP)ev.resP=res;else ev.resM=res;this.render();window.scrollTo(0,0)});
+      $("#retry",el)&&($("#retry",el).onclick=()=>{if(isP){ev.resP=null;ev.ansP={};ev.intentosP++}else{ev.resM=null;ev.ansM={};ev.intentosM++}this.render()});
+    }
+    $("#ev-next",el)&&($("#ev-next",el).onclick=()=>{
+      if(st==="Trabajador"){if(!ev.pid||!p)return toast("Seleccione un instructivo");if(!ev.w.nombre.trim())return toast("Ingrese el nombre del evaluado");if(String(ev.w.rut).replace(/\W/g,"").length<5)return toast("Ingrese el RUT o número de documento")}
+      if(st==="Instructivo"&&!ev.procLeido)return toast("Confirme la lectura del instructivo para continuar");
+      if(st==="MIPER"&&!ev.matLeida&&(p.matriz||[]).length)return toast("Confirme la lectura de la MIPER para continuar");
+      go(1)});
+    if(st==="Firma"){const pad=sigPad($("#sig",el)),pad2=sigPad($("#sig2",el));$("#sig-clear",el).onclick=()=>pad.clear();$("#sig2-clear",el).onclick=()=>pad2.clear();
+      $("#ev-save",el).onclick=async e=>{
+        if(pad.empty())return toast("Falta la firma del evaluado");if(!$("#ck-f",el).checked)return toast("Marque la confirmación antes de guardar");
+        const b=e.currentTarget;b.disabled=true;b.textContent="Guardando…";
+        const rid=nid();const reg={pid:p.id,codigo:p.codigo,titulo:p.titulo,version:String(p.version),nombre:ev.w.nombre.trim(),rut:rutOk(ev.w.rut)?normRut(ev.w.rut):String(ev.w.rut).trim().toUpperCase(),pkey:personKey(ev.w.rut),
+          cargo:ev.w.cargo.trim(),empresa:ev.w.empresa.trim(),turno:ev.w.turno,relator:String(ev.w.relator||"").trim(),modo:ev.modo,procLeido:!!ev.procLeido,matLeida:!!ev.matLeida,
+          procNota:ev.resP?ev.resP.nota:null,procPuntaje:ev.resP?`${ev.resP.buenas}/${ev.resP.total}`:null,procOk:!!(ev.resP&&ev.resP.ok),
+          matNota:ev.resM?ev.resM.nota:null,matPuntaje:ev.resM?`${ev.resM.buenas}/${ev.resM.total}`:null,matOk:!!(ev.resM&&ev.resM.ok),
+          intentosP:ev.resP?ev.intentosP:0,intentosM:ev.resM?ev.intentosM:0,fecha:Date.now(),anulado:false};
+        try{
+          await S.db.doc(`evaluaciones/${S.uid}/firmas/${rid}`).set({img:pad.data(),imgRelator:pad2.empty()?null:pad2.data(),fecha:reg.fecha});
+          await S.db.doc(`evaluaciones/${S.uid}/regs/${rid}`).set(reg);
+          await S.db.doc(`evaluaciones/${S.uid}`).set({updatedAt:Date.now()});
+          ev.saved=true;ev.savedReg=reg;this.render();toast("Registro firmado guardado");
+        }catch(err){toast(errMsg(err));b.disabled=false;b.textContent="Guardar registro firmado"}
+      }}
+  }
+};
+function sigPad(cv){
+  const ctx=cv.getContext("2d");let drawing=false,ink=false,last=null;
+  const reset=()=>{ctx.fillStyle="#fff";ctx.fillRect(0,0,cv.width,cv.height);ink=false};reset();
+  ctx.lineWidth=3.2;ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle="#14254A";
+  const pos=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}};
+  cv.addEventListener("pointerdown",e=>{drawing=true;last=pos(e);cv.setPointerCapture(e.pointerId);ctx.beginPath();ctx.arc(last.x,last.y,1.4,0,7);ctx.fillStyle="#14254A";ctx.fill();ink=true});
+  cv.addEventListener("pointermove",e=>{if(!drawing)return;const p=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;ink=true});
+  const end=()=>drawing=false;cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);
+  return{clear:reset,empty:()=>!ink,data:()=>{const o=document.createElement("canvas");o.width=450;o.height=150;const c=o.getContext("2d");c.drawImage(cv,0,0,450,150);return o.toDataURL("image/png")}};
+}
+
+/* ---------- vista: mejoras ---------- */
+views.mejoras={
+  mount(el){
+    const pre=S.mejPid||"";S.mejPid=null;
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Mejora continua</p><h1>Comentarios de mejora</h1><p class="lede">Proponga cambios a un procedimiento o a su matriz, informe una desviación detectada en terreno o haga una consulta. Cada comentario llega a la bandeja del Jefe de Operaciones Portuarias.</p></div></section>
+    <div class="two">
+      <section class="panel stack" id="mf"><h2>Nuevo comentario</h2>
+        <label class="f">Procedimiento<select id="m-p"><option value="">General (sin procedimiento específico)</option>${vigentes().map(p=>`<option value="${esc(p.id)}"${p.id===pre?" selected":""}>${esc(p.codigo)} · ${esc(p.titulo)}</option>`).join("")}</select></label>
+        <label class="f">Tipo<select id="m-t"><option>Mejora propuesta</option><option>Desviación detectada</option><option>Consulta</option></select></label>
+        <label class="f">Comentario<textarea id="m-x" rows="6" placeholder="Describa qué cambiaría y por qué. Si es una desviación, indique lugar, fecha y turno."></textarea></label>
+        <label class="f">Su nombre<input type="text" id="m-n" value="${esc(S.me&&S.me.name||"")}"></label>
+        <div class="row"><button class="btn primary" id="m-send">Enviar comentario</button></div>
+        <div class="copyline muted"><span>También puede escribir a</span><code id="mail">${JEFE_MAIL}</code><button class="btn sm" id="m-copy">Copiar correo</button></div>
+      </section>
+      <section class="panel"><h2 id="m-h">${S.canEdit?"Bandeja del Jefe de Operaciones":"Mis comentarios"}</h2><div data-slot="list"></div></section>
+    </div>`;
+    $("#m-copy",el).onclick=async()=>{try{await navigator.clipboard.writeText(JEFE_MAIL);toast("Correo copiado")}catch{const r=document.createRange();r.selectNodeContents($("#mail"));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Correo seleccionado: cópielo con Ctrl+C")}};
+    $("#m-send",el).onclick=async e=>{
+      const x=$("#m-x").value.trim();if(x.length<10)return toast("Escriba un comentario de al menos 10 caracteres");if(!S.db)return toast("Sin conexión a la base de datos");
+      const b=e.currentTarget;b.disabled=true;const p=procById($("#m-p").value);const id=nid();
+      try{await S.db.doc(`mejoras/${S.uid}/items/${id}`).set({pid:p?.id||null,codigo:p?.codigo||"General",titulo:p?.titulo||"",tipo:$("#m-t").value,texto:x,nombre:$("#m-n").value.trim(),estado:"nueva",respuesta:"",fecha:Date.now()});
+        await S.db.doc(`mejoras/${S.uid}`).set({updatedAt:Date.now()});$("#m-x").value="";toast("Comentario enviado al Jefe de Operaciones")}
+      catch(err){toast(errMsg(err))}b.disabled=false};
+    this.update();
+  },
+  update(){
+    const box=$('#view [data-slot="list"]');if(!box)return;
+    let items=S.canEdit?Object.values(S.mejoras).flat():(S.mejoras[S.uid]||[]);
+    items=items.slice().sort((a,b)=>{const o={nueva:0,revision:1,implementada:2,descartada:3};return (o[a.estado||"nueva"]-o[b.estado||"nueva"])||(b.fecha-a.fecha)});
+    if(box.querySelector("textarea:focus,select:focus"))return;
+    if(!items.length){box.innerHTML=`<div class="empty"><b>${S.canEdit?"No hay comentarios recibidos.":"Aún no ha enviado comentarios."}</b>${S.canEdit?"Cuando el personal envíe sugerencias aparecerán aquí, con la más reciente primero.":"Sus envíos y la respuesta del Jefe de Operaciones se verán aquí."}</div>`;return}
+    box.innerHTML=`<div class="stack">${items.map(m=>{const[lbl,k]=MEJ_ESTADOS[m.estado||"nueva"];return`<div class="mej"><div class="h"><span class="chip ${k}">${lbl}</span><span class="chip">${esc(m.tipo)}</span><span class="code">${esc(m.codigo)}</span><span class="sp"></span><span>${fmtDT(m.fecha)}</span></div>
+      <div class="tx">${esc(m.texto)}</div><div class="small muted">${esc(m.nombre||"Sin nombre")}${S.canEdit?" · cuenta: "+esc(nameOf(m.owner)):""}</div>
+      ${S.canEdit?`<div class="grid" style="grid-template-columns:minmax(0,180px) minmax(0,1fr)"><select id="ms-${esc(m.id)}">${Object.entries(MEJ_ESTADOS).map(([v,[l]])=>`<option value="${v}"${(m.estado||"nueva")===v?" selected":""}>${l}</option>`).join("")}</select><textarea id="mr-${esc(m.id)}" rows="2" placeholder="Respuesta para quien envió el comentario" style="min-height:44px">${esc(m.respuesta)}</textarea></div><div class="row"><button class="btn sm primary" data-save="${esc(m.owner)}|${esc(m.id)}">Guardar respuesta</button></div>`:(m.respuesta?`<div class="resp"><b>Respuesta:</b> ${esc(m.respuesta)}</div>`:"")}</div>`}).join("")}</div>`;
+    $$("[data-save]",box).forEach(b=>b.onclick=async()=>{const[o,id]=b.dataset.save.split("|");b.disabled=true;
+      try{await S.db.doc(`mejoras/${o}/items/${id}`).update({estado:$("#ms-"+id).value,respuesta:$("#mr-"+id).value.trim(),respondidoAt:Date.now()});toast("Respuesta guardada")}catch(e){toast(errMsg(e))}b.disabled=false});
+  }
+};
+
+/* ---------- vista: personal ---------- */
+views.personal={
+  mount(el){
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Dotación</p><h1>Personal</h1><p class="lede">Trabajadores que deben conocer los procedimientos. Es la base del % de cobertura del dashboard y autocompleta el registro de firmas.</p></div></section>
+    <div class="two"><section class="panel"><h2>Nómina <small data-slot="n"></small></h2><input type="search" id="pq" placeholder="Buscar por nombre, RUT o empresa" style="margin-bottom:12px"><div data-slot="list"></div></section>
+    <section class="panel stack" id="pf"><h2>Agregar trabajador</h2>
+      <label class="f">Nombre completo<input type="text" id="pf-n"></label>
+      <div class="grid"><label class="f">RUT<input type="text" id="pf-r" placeholder="12.345.678-9"></label><label class="f">Cargo<input type="text" id="pf-c"></label>
+      <label class="f">Empresa<input type="text" id="pf-e" value="HTP" list="dl-emp2"></label><label class="f">Turno<select id="pf-t">${TURNOS.map(t=>`<option>${t}</option>`).join("")}</select></label></div>
+      <datalist id="dl-emp2"><option>HTP</option><option>Reloncaví</option><option>Mabe</option></datalist>
+      <div class="row"><button class="btn primary" id="pf-add">Agregar</button></div>
+      <details><summary class="small" style="cursor:pointer;font-weight:600">Pegar nómina desde Excel</summary><p class="hint" style="margin:6px 0">Columnas: Nombre · RUT · Cargo · Empresa · Turno.</p><textarea id="pf-paste"></textarea><div class="row" style="margin-top:6px"><button class="btn sm" id="pf-imp">Importar</button></div></details>
+    </section></div>`;
+    $("#pq",el).oninput=()=>this.update();
+    const add=async w=>{const key=personKey(w.rut);await S.db.doc(`personal/${key}`).set({key,nombre:w.nombre,rut:rutOk(w.rut)?normRut(w.rut):String(w.rut).toUpperCase(),cargo:w.cargo||"",empresa:w.empresa||"",turno:w.turno||"",activo:true,updatedAt:Date.now()})};
+    $("#pf-add",el).onclick=async()=>{const w={nombre:$("#pf-n").value.trim(),rut:$("#pf-r").value.trim(),cargo:$("#pf-c").value.trim(),empresa:$("#pf-e").value.trim(),turno:$("#pf-t").value};
+      if(!w.nombre||w.rut.replace(/\W/g,"").length<5)return toast("Ingrese nombre y RUT");if(!S.db)return toast("Sin conexión a la base de datos");
+      try{await add(w);["pf-n","pf-r","pf-c"].forEach(i=>$("#"+i).value="");toast(rutOk(w.rut)?"Trabajador agregado":"Agregado. El RUT no es válido y se guardó como N° de documento.")}catch(e){toast(errMsg(e))}};
+    $("#pf-imp",el).onclick=async e=>{const rows=$("#pf-paste").value.trim().split(/\r?\n/).map(l=>l.split("\t")).filter(c=>c.length>=2&&c[0].trim()&&!/^nombre$/i.test(c[0].trim()));
+      if(!rows.length)return toast("No se reconocieron filas. Copie con tabulaciones desde Excel.");const b=e.currentTarget;b.disabled=true;let n=0;
+      for(const c of rows){try{await add({nombre:c[0].trim(),rut:(c[1]||"").trim(),cargo:(c[2]||"").trim(),empresa:(c[3]||"").trim(),turno:(c[4]||"").trim()});n++}catch(err){toast(errMsg(err));break}}
+      b.disabled=false;$("#pf-paste").value="";toast(`${n} trabajadores importados`)};
+    this.update();
+  },
+  update(){
+    const el=$("#view");const box=$('[data-slot="list"]',el);if(!box)return;
+    if(S.personalErr){box.innerHTML='<div class="empty"><b>No tiene acceso a la nómina.</b>Se requiere acceso de colaborador.</div>';return}
+    const q=($("#pq",el).value||"").toLowerCase();const list=S.personal.filter(p=>!q||[p.nombre,p.rut,fmtRut(p.rut),p.empresa,p.cargo].join(" ").toLowerCase().includes(q)).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+    $('[data-slot="n"]',el).textContent=`${activos().length} activos`;
+    if(!list.length){box.innerHTML=`<div class="empty"><b>${S.personal.length?"Nadie coincide con la búsqueda.":"La nómina está vacía."}</b>${S.personal.length?"":"Agregue trabajadores uno a uno o pegue la nómina desde Excel."}</div>`;return}
+    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>RUT</th><th>Cargo · Empresa</th><th>Turno</th><th>Estado</th><th></th></tr></thead><tbody>${list.map(p=>`<tr><td>${esc(p.nombre)}</td><td class="code">${esc(fmtRut(p.rut))}</td><td>${esc(p.cargo)}<div class="small muted">${esc(p.empresa)}</div></td><td class="small">${esc(p.turno)}</td><td>${p.activo!==false?'<span class="chip ok">Activo</span>':'<span class="chip">Inactivo</span>'}</td><td><button class="btn sm" data-tog="${esc(p.id)}">${p.activo!==false?"Desactivar":"Activar"}</button></td></tr>`).join("")}</tbody></table></div>`;
+    $$("[data-tog]",box).forEach(b=>b.onclick=async()=>{const p=S.personal.find(x=>x.id===b.dataset.tog);try{await S.db.doc(`personal/${p.id}`).update({activo:p.activo===false,updatedAt:Date.now()})}catch(e){toast(errMsg(e))}});
+  }
+};
+
+/* ---------- vista: cargar existentes ---------- */
+const TPL = {
+  Procedimientos:["Código","Título","Versión","Versión anterior","Proceso","Subproceso","Actividad","Sistemas de gestión","Área","Estado","Nota aprobación %","Elaboró nombre","Elaboró cargo","Elaboró fecha","Revisó nombre","Revisó cargo","Revisó fecha","Aprobó nombre","Aprobó cargo","Aprobó fecha","Tarea MIPER","Tipo de tarea","Lugares específicos","Archivo PDF"],
+  Secciones:["Código","N°","Título de sección","Contenido"],
+  MIPER:["Código","N°","Etapa / pasos IT","Puestos expuestos","Peligro (GEMA)","Riesgo (código ISP)","Daño probable","P inicial","C inicial","Medidas de control (DS 44)","P residual","C residual","Responsable"],
+  Preguntas:["Código","Evaluación","Formato","Pregunta o afirmación","Alternativa A","Alternativa B","Alternativa C","Alternativa D","Correcta","Justificación"]
+};
+const TPL_ALIAS={MIPER:["Matriz"],Procedimientos:["Instructivos"]};
+const TPL_W = {Procedimientos:[14,42,9,22,24,22,40,40,22,10,10,20,22,12,20,22,12,20,22,12,40,14,40,24],Secciones:[14,6,36,100],MIPER:[14,5,30,24,40,30,28,8,8,60,8,8,24],Preguntas:[14,12,12,70,28,28,28,28,9,60]};
+const normH = s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"");
+const normCode = s=>String(s||"").trim().toUpperCase().replace(/\s+/g,"");
+const isExample = c=>/^EJEMPLO/i.test(String(c||""));
+function needLib(name,glob){if(!window[glob]){toast(`No se pudo cargar ${name}. Recargue la página.`);return false}return true}
+const evalCell=(n,t)=>n!=null?n:(t||"");
+
+function buildWorkbook(procs,example){
+  const X=window.XLSX;const wb=X.utils.book_new();
+  const instr=[["PLANTILLA DE CARGA · INSTRUCTIVOS, MIPER Y EVALUACIONES · HTP Unidad Terminal Marítimo"],[""],
+    ["Cómo usarla"],
+    ["1. Procedimientos: una fila por instructivo (IT). El Código une todas las hojas. Incluye la identificación del documento, Elaboró/Revisó/Aprobó y los datos generales de la MIPER."],
+    ["2. Secciones: una fila por sección de la IT (1. Objetivo … 13. Control de cambios). En Contenido use Alt+Enter para saltos de línea, “- ” al inicio para viñetas y “ | ” entre celdas para tablas (la primera línea es el encabezado)."],
+    ["3. MIPER: una fila por peligro. P y C solo admiten 1, 2 o 4. El VEP (P × C) se calcula solo. Si el riesgo no se evalúa con P × C (ej. psicosocial), escriba el criterio en P inicial / P residual y deje C vacío."],
+    ["4. Preguntas: Evaluación = IT o MIPER. Formato = V/F o Alternativas. Correcta = V o F (o A, B, C, D). Justificación = texto de la pauta del relator."],
+    ["5. Las filas cuyo código empieza con EJEMPLO no se importan; puede borrarlas."],
+    ["6. Archivo PDF (opcional): nombre del PDF original. También se asocia si el nombre del archivo empieza con el código."],
+    [""],["Valores permitidos"],
+    ["Estado","Vigente · Borrador"],["Área",AREAS.join(" · ")],["P (probabilidad)","1 Baja · 2 Media · 4 Alta"],["C (consecuencia)","1 Ligeramente dañino · 2 Dañino · 4 Extremadamente dañino"],
+    ["VEP","1–2 Tolerable · 4 Moderado · 8 Importante · 16 Intolerable"],["Riesgos críticos","(CS) Caída de carga · (VH) Contacto hombre–vehículo · (AC) Agentes y condiciones ambientales · (IP) Instrucción deficiente"],[""],
+    ["Si el código ya existe en la aplicación, el instructivo se actualiza. Secciones, MIPER y preguntas se reemplazan solo si la planilla trae filas para ese código."]];
+  const rows={};Object.keys(TPL).forEach(k=>rows[k]=[TPL[k]]);
+  const add=(p,code)=>{const f=withFirmas(p);
+    rows.Procedimientos.push([code,p.titulo,p.version,p.versionAnterior||"",p.proceso||"",p.subproceso||"",p.actividad||"",p.sistemas||"",p.area||"",p.estado==="borrador"?"Borrador":"Vigente",p.aprobacion||80,
+      f.elaboro.nombre,f.elaboro.cargo,f.elaboro.fecha,f.reviso.nombre,f.reviso.cargo,f.reviso.fecha,f.aprobo.nombre,f.aprobo.cargo,f.aprobo.fecha,p.tarea||"",p.tipoTarea||"",p.lugares||"",p.docNombre||""]);
+    (p.secciones||[]).forEach((s,i)=>rows.Secciones.push([code,i+1,s.titulo,s.texto]));
+    (p.matriz||[]).forEach((r0,i)=>{const r=normRow(r0);rows.MIPER.push([code,i+1,r.etapa,r.puestos,r.peligro,r.riesgo,r.dano,evalCell(r.p,r.evalIni),r.c??"",r.control,evalCell(r.pr,r.evalRes),r.cr??"",r.responsable])});
+    [["IT",p.preguntasProc],["MIPER",p.preguntasMat]].forEach(([t,qs])=>(qs||[]).forEach(q=>rows.Preguntas.push(q.tipo==="vf"?[code,t,"V/F",q.q,"","","","",q.ok?"F":"V",q.just||""]:[code,t,"Alternativas",q.q,q.ops[0]||"",q.ops[1]||"",q.ops[2]||"",q.ops[3]||"","ABCD"[q.ok]||"A",q.just||""])));
+  };
+  if(procs&&procs.length)procs.forEach(p=>add(p,p.codigo));
+  else if(example)add(example,"EJEMPLO-"+(example.codigo||"001"));
+  X.utils.book_append_sheet(wb,Object.assign(X.utils.aoa_to_sheet(instr),{"!cols":[{wch:24},{wch:120}]}),"Instrucciones");
+  for(const n of Object.keys(TPL)){const ws=X.utils.aoa_to_sheet(rows[n]);ws["!cols"]=TPL_W[n].map(w=>({wch:w}));ws["!autofilter"]={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(1,rows[n].length-1),c:TPL[n].length-1}})};X.utils.book_append_sheet(wb,ws,n)}
+  return new Blob([X.write(wb,{bookType:"xlsx",type:"array"})],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+function readSheet(wb,name){
+  const names=[name,...(TPL_ALIAS[name]||[])].map(normH);const sh=wb.SheetNames.find(n=>names.includes(normH(n)));if(!sh)return null;
+  const aoa=window.XLSX.utils.sheet_to_json(wb.Sheets[sh],{header:1,defval:"",raw:false});if(!aoa.length)return[];
+  const head=aoa[0].map(normH);const want=TPL[name].map(normH);
+  const idx=want.map(w=>{let j=head.indexOf(w);if(j>=0)return j;
+    if(w.length<=2)return head.findIndex(h=>new RegExp("^"+w+"\\d*$").test(h));
+    return head.findIndex(h=>h.startsWith(w)||(h.length>3&&w.startsWith(h)))});
+  return aoa.slice(1).map((r,i)=>({row:i+2,v:idx.map(j=>j<0?"":String(r[j]??"").trim())})).filter(o=>o.v.some(x=>x!==""));
+}
+function parseWorkbook(wb){
+  const out={procs:{},errors:[],warns:[],skipped:0};
+  const P=readSheet(wb,"Procedimientos");
+  if(P===null){out.errors.push("El archivo no tiene la hoja “Procedimientos”. Use la plantilla descargada desde esta ventana.");return out}
+  const libByCode={};S.procs.forEach(p=>libByCode[normCode(p.codigo)]=p);
+  const fromBase=b=>({codigo:b.codigo,titulo:b.titulo,version:b.version,versionAnterior:b.versionAnterior||"",area:b.area,estado:b.estado,aprobacion:b.aprobacion,proceso:b.proceso||"",subproceso:b.subproceso||"",actividad:b.actividad||"",sistemas:b.sistemas||"",tarea:b.tarea||"",tipoTarea:b.tipoTarea||"",lugares:b.lugares||"",firmasDoc:withFirmas(b)});
+  const getP=(code,sheet,row)=>{const k=normCode(code);if(out.procs[k])return out.procs[k];
+    if(libByCode[k]){out.procs[k]={code:k,fromLib:true,base:libByCode[k],data:fromBase(libByCode[k]),sec:[],mx:[],qp:[],qm:[]};return out.procs[k]}
+    out.errors.push(`${sheet}, fila ${row}: el código ${code} no está en la hoja Procedimientos ni en la biblioteca.`);return null};
+  P.forEach(({row,v})=>{const[cod,tit,ver,verAnt,pro,sub,act,sis,area,est,apr,en,ec,ef,rn,rc,rf,an,ac,af,tarea,tipoT,lug,pdf]=v;
+    if(isExample(cod)){out.skipped++;return}
+    if(!cod||!tit){out.errors.push(`Procedimientos, fila ${row}: faltan Código o Título.`);return}
+    const k=normCode(cod);if(out.procs[k]&&!out.procs[k].fromLib){out.errors.push(`Procedimientos, fila ${row}: el código ${cod} está repetido.`);return}
+    const ar=AREAS.find(a=>normH(a)===normH(area))||(area||AREAS[0]);if(area&&!AREAS.some(a=>normH(a)===normH(area)))out.warns.push(`Procedimientos, fila ${row}: el área “${area}” no está en la lista; se guarda tal cual.`);
+    let ap=parseInt(apr,10);if(apr&&(isNaN(ap)||ap<0||ap>100)){out.warns.push(`Procedimientos, fila ${row}: nota de aprobación no válida; se usa 80%.`);ap=80}
+    if(!ver)out.warns.push(`Procedimientos, fila ${row}: sin versión; se asigna 01.`);
+    const fd=blankFirmas();[[fd.elaboro,en,ec,ef],[fd.reviso,rn,rc,rf],[fd.aprobo,an,ac,af]].forEach(([o,n,c,f])=>{if(n)o.nombre=n;if(c)o.cargo=c;if(f)o.fecha=f});
+    out.procs[k]={code:k,fromLib:false,base:libByCode[k]||null,pdfName:pdf,sec:[],mx:[],qp:[],qm:[],
+      data:{codigo:cod.trim(),titulo:tit,version:ver||"01",versionAnterior:verAnt,area:ar,estado:normH(est).startsWith("borr")?"borrador":"vigente",aprobacion:isNaN(ap)?80:ap,proceso:pro,subproceso:sub,actividad:act,sistemas:sis||"Calidad · Ambiente · Energía · Seguridad y Salud en el Trabajo",tarea,tipoTarea:tipoT,lugares:lug,firmasDoc:fd}};
+  });
+  (readSheet(wb,"Secciones")||[]).forEach(({row,v})=>{const[cod,n,t,c]=v;if(isExample(cod)){out.skipped++;return}const p=getP(cod,"Secciones",row);if(!p||(!t&&!c))return;
+    p.sec.push({n:parseFloat(n)||p.sec.length+1,titulo:t||`Sección ${n}`,texto:c})});
+  (readSheet(wb,"MIPER")||[]).forEach(({row,v})=>{const[cod,n,et,pu,pe,ri,da,pi,ci,ctl,pr,cr,resp]=v;if(isExample(cod)){out.skipped++;return}const p=getP(cod,"MIPER",row);if(!p)return;
+    if(!pe&&!ri){out.errors.push(`MIPER, fila ${row}: faltan Peligro y Riesgo.`);return}
+    const chk=(a,b,lbl)=>{if(a===""&&b==="")return;const na=+a,nb=+b;if(!isNaN(na)&&a!==""&&(![1,2,4].includes(na)||![1,2,4].includes(nb)))out.warns.push(`MIPER, fila ${row}: P y C ${lbl} deben ser 1, 2 o 4; se ajustaron.`)};chk(pi,ci,"iniciales");chk(pr,cr,"residuales");
+    if(pcOpt(pr)!=null&&pcOpt(pi)!=null&&pcOpt(pr)*pcOpt(cr)>pcOpt(pi)*pcOpt(ci))out.warns.push(`MIPER, fila ${row}: el VEP residual es mayor que el inicial.`);
+    if(!ctl)out.warns.push(`MIPER, fila ${row}: sin medidas de control.`);
+    p.mx.push({n:parseFloat(n)||p.mx.length+1,etapa:et,puestos:pu,peligro:pe,riesgo:ri,dano:da,p:pcOpt(pi),c:pcOpt(pi)==null?null:pcOpt(ci),evalIni:pcOpt(pi)==null?pi:"",control:ctl,pr:pcOpt(pr),cr:pcOpt(pr)==null?null:pcOpt(cr),evalRes:pcOpt(pr)==null?pr:"",responsable:resp})});
+  (readSheet(wb,"Preguntas")||[]).forEach(({row,v})=>{const[cod,ev,fmt,q,a,b,c,d,ok,just]=v;if(isExample(cod)){out.skipped++;return}const p=getP(cod,"Preguntas",row);if(!p)return;
+    if(!q){out.errors.push(`Preguntas, fila ${row}: falta la pregunta o afirmación.`);return}
+    const L=String(ok).trim().toUpperCase().charAt(0);const vf=normH(fmt).startsWith("v")||(!fmt&&!a&&!b&&(L==="V"||L==="F"));let qq;
+    if(vf){if(L!=="V"&&L!=="F"){out.errors.push(`Preguntas, fila ${row}: en una afirmación V/F la columna Correcta debe ser V o F.`);return}qq={tipo:"vf",q,ops:["Verdadero","Falso"],ok:L==="F"?1:0,just}}
+    else{const ops=[a,b,c,d];const oi="ABCD".indexOf(L);if(oi<0||!ops[oi]){out.errors.push(`Preguntas, fila ${row}: Correcta debe ser A, B, C o D y apuntar a una alternativa con texto.`);return}
+      if(ops.filter(Boolean).length<2){out.errors.push(`Preguntas, fila ${row}: necesita al menos 2 alternativas.`);return}qq=compactQ({tipo:"alt",q,ops,ok:oi,just})}
+    (normH(ev).startsWith("m")?p.qm:p.qp).push(qq)});
+  Object.values(out.procs).forEach(p=>{p.sec.sort((x,y)=>x.n-y.n);p.mx.sort((x,y)=>x.n-y.n);p.mx.forEach(r=>delete r.n)});
+  return out;
+}
+function mergedDoc(p){
+  const b=p.base||{};const d=p.data;
+  return{...d,version:String(d.version),
+    secciones:p.sec.length?p.sec.map(s=>({titulo:s.titulo,texto:s.texto})):(b.secciones||IT_SECS.map(t=>({titulo:t,texto:""}))),
+    matriz:p.mx.length?p.mx:(b.matriz||[]),
+    preguntasProc:p.qp.length?p.qp:(b.preguntasProc||[]),
+    preguntasMat:p.qm.length?p.qm:(b.preguntasMat||[]),
+    docAssetId:p.assetId||b.docAssetId||null,docNombre:p.assetName||b.docNombre||null,docUrl:p.assetId?(p.assetUrl||null):(b.docUrl||null),
+    createdAt:b.createdAt||Date.now(),updatedAt:Date.now(),updatedBy:S.uid};
+}
+views.cargar={
+  tab:"excel",
+  mount(el){
+    if(!S.canEdit){el.innerHTML=`<div class="empty"><b>La carga de instructivos es solo para editores.</b>Pida al Jefe de Operaciones acceso de editor. <a href="#procedimientos">Volver</a></div>`;return}
+    this.el=el;this.render();
+  },
+  render(){
+    const el=this.el;
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / Carga</p><h1>Cargar instructivos existentes</h1>
+      <p class="lede">Traiga a la aplicación los instructivos (IT), sus MIPER y evaluaciones. Use la planilla con formato establecido para cargar varios a la vez, o suba los documentos Word de una IT.</p></div></section>
+      <div class="subtabs" role="tablist"><button role="tab" data-t="excel" aria-selected="${this.tab==="excel"}">Planilla Excel (carga masiva)</button><button role="tab" data-t="word" aria-selected="${this.tab==="word"}">Documentos Word</button></div>
+      <div id="cg"></div>`;
+    $$(".subtabs button",el).forEach(b=>b.onclick=()=>{this.tab=b.dataset.t;this.render()});
+    this.tab==="excel"?this.renderExcel():this.renderWord();
+  },
+  renderExcel(){
+    const c=$("#cg");
+    c.innerHTML=`<div class="stack">
+      <section class="panel"><h2>1. Descargue la plantilla</h2>
+        <div class="tbl-wrap" style="margin-bottom:12px"><table><thead><tr><th>Hoja</th><th>Una fila por</th><th>Contenido</th></tr></thead><tbody>
+          <tr><td><b>Procedimientos</b></td><td>instructivo</td><td class="small">Código, título, versión, proceso, subproceso, actividad, sistemas de gestión, estado, nota de aprobación, Elaboró/Revisó/Aprobó, datos generales de la MIPER</td></tr>
+          <tr><td><b>Secciones</b></td><td>sección de la IT</td><td class="small">${TPL.Secciones.join(" · ")}</td></tr>
+          <tr><td><b>MIPER</b></td><td>peligro evaluado</td><td class="small">${TPL.MIPER.join(" · ")}</td></tr>
+          <tr><td><b>Preguntas</b></td><td>afirmación o pregunta</td><td class="small">${TPL.Preguntas.join(" · ")}</td></tr></tbody></table></div>
+        <p class="hint" style="margin-bottom:10px">El <b>Código</b> une las cuatro hojas. La plantilla trae como ejemplo una fila de cada hoja (código EJEMPLO, no se importa) y la hoja Instrucciones con los valores permitidos.</p>
+        <div class="row"><button class="btn primary" id="tpl">Descargar plantilla Excel</button><button class="btn" id="tpl-lib" ${S.procs.length?"":"disabled"}>Descargar biblioteca actual en este formato</button></div></section>
+      <section class="panel"><h2>2. Suba la planilla completa</h2>
+        <div class="row"><label class="btn orange" for="xf">Elegir archivo .xlsx</label><input type="file" id="xf" accept=".xlsx,.xls" hidden><span class="small muted">${this.parsed?esc(this.parsed.fname):"Ningún archivo seleccionado"}</span></div>
+        <div class="row" style="margin-top:12px"><label class="btn" for="pf">Adjuntar PDF originales (opcional)</label><input type="file" id="pf" accept=".pdf,application/pdf" multiple hidden><span class="small muted">${this.pdfs&&this.pdfs.length?`${this.pdfs.length} PDF seleccionados`:"Se asocian por el nombre indicado en la planilla o si el nombre del archivo empieza con el código."}</span></div></section>
+      <section class="panel"><h2>3. Revise y confirme</h2><div id="prev-b"></div></section></div>`;
+    const ex={...blankProc(),codigo:"001",titulo:"Traslado y descarga de productos de acero",version:"03",proceso:"Descarga de break bulk",subproceso:"Descarga de barras",actividad:"Traslado desde muelle y descarga en zona de almacenamiento",estado:"vigente",
+      secciones:[{titulo:"1. Objetivo",texto:"Establecer la metodología estandarizada para el traslado y descarga de productos de acero.\n- Conformidad del producto\n- Control de riesgos críticos"},{titulo:"3. Documentos de referencia",texto:"Documento | Aplicación en esta IT\nISO 45001:2018 | Control operacional de riesgos"}],
+      matriz:[{etapa:"Revisión previa del camión (1)",puestos:"Conductor de camión",peligro:"E: camión con fallas en frenos, luces o neumáticos\nG: operar sin informar anomalías",riesgo:"Choque, colisión o volcamiento (I2)",dano:"Lesiones múltiples, muerte",p:2,c:4,control:"Administrativa: inspección preoperacional del vehículo (C11)\nEPP: chaleco reflectante",pr:1,cr:4,responsable:"Conductor / Encargado del área"}],
+      preguntasProc:[{tipo:"vf",q:"La velocidad máxima permitida dentro del terminal marítimo es de 30 km/h.",ops:["Verdadero","Falso"],ok:1,just:"Paso 2: en el terminal marítimo el límite es 20 km/h."}]};
+    $("#tpl",c).onclick=()=>{if(needLib("el generador de Excel","XLSX"))saveFile("Plantilla_Carga_Instructivos_HTP.xlsx",buildWorkbook(null,ex))};
+    $("#tpl-lib",c).onclick=()=>{if(needLib("el generador de Excel","XLSX"))saveFile(`Biblioteca_Instructivos_HTP_${new Date().toISOString().slice(0,10)}.xlsx`,buildWorkbook(S.procs.slice().sort((a,b)=>String(a.codigo).localeCompare(String(b.codigo)))))};
+    $("#xf",c).onchange=async e=>{const f=e.target.files[0];if(!f||!needLib("el lector de Excel","XLSX"))return;
+      try{const wb=window.XLSX.read(await f.arrayBuffer(),{type:"array"});this.parsed=parseWorkbook(wb);this.parsed.fname=f.name;this.matchPdfs();this.renderExcel()}
+      catch(err){toast("No se pudo leer el archivo. Verifique que sea un Excel (.xlsx) válido.")}};
+    $("#pf",c).onchange=e=>{this.pdfs=[...e.target.files];this.matchPdfs();this.renderExcel()};
+    this.renderPreview();
+  },
+  matchPdfs(){
+    if(!this.parsed)return;const ps=Object.values(this.parsed.procs);ps.forEach(p=>p.pdf=null);
+    (this.pdfs||[]).forEach(f=>{const nfn=normCode(f.name);const p=ps.find(p=>p.pdfName&&normH(p.pdfName)===normH(f.name))||ps.find(p=>nfn.startsWith(p.code));if(p)p.pdf=f});
+  },
+  renderPreview(){
+    const b=$("#prev-b");const P=this.parsed;
+    if(!P){b.innerHTML='<div class="empty"><b>Todavía no ha subido una planilla.</b>Aquí verá qué se va a crear o actualizar, con los errores por fila, antes de guardar nada.</div>';return}
+    const ps=Object.values(P.procs);const nuevos=ps.filter(p=>!p.base).length,act=ps.filter(p=>p.base).length;
+    const nmx=ps.reduce((a,p)=>a+p.mx.length,0),nq=ps.reduce((a,p)=>a+p.qp.length+p.qm.length,0),nsec=ps.reduce((a,p)=>a+p.sec.length,0);
+    const pdfsSin=(this.pdfs||[]).filter(f=>!ps.some(p=>p.pdf===f));const nc='<span class="muted small">sin cambio</span>';
+    b.innerHTML=`<div class="row" style="margin-bottom:12px"><span class="chip info">${nuevos} nuevos</span><span class="chip">${act} se actualizan</span><span class="chip">${nsec} secciones</span><span class="chip">${nmx} filas MIPER</span><span class="chip">${nq} preguntas</span>${P.errors.length?`<span class="chip bad">${P.errors.length} errores</span>`:'<span class="chip ok">Sin errores</span>'}${P.warns.length?`<span class="chip warn">${P.warns.length} avisos</span>`:""}${P.skipped?`<span class="chip">${P.skipped} filas de ejemplo omitidas</span>`:""}</div>
+      ${P.errors.length?`<div class="mej" style="border-color:var(--bad);margin-bottom:12px"><b style="color:var(--bad)">Corrija estos errores en la planilla y vuelva a subirla</b><ul class="small" style="margin:0;padding-left:18px">${P.errors.slice(0,40).map(e=>`<li>${esc(e)}</li>`).join("")}${P.errors.length>40?`<li>y ${P.errors.length-40} más…</li>`:""}</ul></div>`:""}
+      ${P.warns.length?`<details style="margin-bottom:12px"><summary class="small" style="cursor:pointer;font-weight:600;color:var(--warn)">Ver ${P.warns.length} avisos (no impiden la carga)</summary><ul class="small" style="padding-left:18px">${P.warns.map(e=>`<li>${esc(e)}</li>`).join("")}</ul></details>`:""}
+      ${pdfsSin.length?`<p class="small" style="color:var(--warn);margin-bottom:12px">PDF sin instructivo asociado: ${pdfsSin.map(f=>esc(f.name)).join(", ")}</p>`:""}
+      ${ps.length?`<div class="tbl-wrap"><table><thead><tr><th>Acción</th><th>Código</th><th>Título</th><th>Versión</th><th>Estado</th><th class="num">Secciones</th><th class="num">MIPER</th><th class="num">Preg. IT / MIPER</th><th>PDF</th></tr></thead><tbody>
+      ${ps.map(p=>{const revCh=p.base&&String(p.base.version)!==String(p.data.version);return`<tr><td>${p.base?`<span class="chip">Actualiza</span>${revCh?' <span class="chip warn">Nueva versión</span>':""}`:'<span class="chip info">Nuevo</span>'}</td><td class="code">${esc(p.data.codigo)}</td><td>${esc(p.data.titulo)}</td><td class="code">${esc(p.data.version)}</td><td>${p.data.estado==="borrador"?'<span class="chip warn">Borrador</span>':'<span class="chip ok">Vigente</span>'}</td>
+        <td class="num">${p.sec.length||(p.base?nc:0)}</td><td class="num">${p.mx.length||(p.base?nc:0)}</td><td class="num">${p.qp.length||p.qm.length?`${p.qp.length} / ${p.qm.length}`:(p.base?nc:"0 / 0")}</td><td class="small">${p.pdf?esc(p.pdf.name):p.pdfName?`<span style="color:var(--warn)">falta ${esc(p.pdfName)}</span>`:"—"}</td></tr>`}).join("")}
+      </tbody></table></div>`:'<div class="empty">La planilla no trae instructivos para importar.</div>'}
+      ${ps.some(p=>p.base&&String(p.base.version)!==String(p.data.version))?'<p class="hint" style="margin-top:8px">Los instructivos con nueva versión reinician su cobertura: el personal debe volver a firmar.</p>':""}
+      <div class="row" style="margin-top:14px"><button class="btn primary" id="imp" ${P.errors.length||!ps.length?"disabled":""}>Importar ${ps.length} instructivo${ps.length===1?"":"s"}</button><button class="btn ghost" id="imp-x">Descartar</button><span class="small muted" id="imp-st"></span></div>`;
+    $("#imp-x",b).onclick=()=>{this.parsed=null;this.pdfs=[];this.renderExcel()};
+    $("#imp",b).onclick=e=>this.doImport(e.currentTarget);
+  },
+  async doImport(btn){
+    const ps=Object.values(this.parsed.procs);const st=$("#imp-st");btn.disabled=true;let ok=0;
+    for(const [i,p] of ps.entries()){
+      st.textContent=`Guardando ${i+1} de ${ps.length}: ${p.data.codigo}`;
+      try{
+        if(p.pdf){if(!S.assets)throw{message:"La carga de PDF no está disponible; importe sin PDF o active Storage"};const r=await S.assets.upload(p.pdf);p.assetId=r.id;p.assetName=p.pdf.name;p.assetUrl=FB?r.url:null}
+        const id=p.base?p.base.id:nid();await S.db.doc(`procedimientos/${id}`).set(mergedDoc(p));ok++;
+      }catch(err){toast(`Se detuvo en ${p.data.codigo}: ${errMsg(err)}`);st.textContent=`${ok} de ${ps.length} importados. Corrija y vuelva a subir la planilla; los ya guardados se actualizarán sin duplicarse.`;btn.disabled=false;return}
+    }
+    toast(`${ok} instructivos importados`);this.parsed=null;this.pdfs=[];location.hash="#procedimientos";
+  },
+  renderWord(){
+    const c=$("#cg");const w=this.word??={codigo:"",texto:"",files:[],area:AREAS[0]};
+    c.innerHTML=`<div class="two"><section class="panel stack" id="wf"><h2>Convertir documentos Word al formato HTP</h2>
+      <p class="small muted">Suba juntos los .docx de una misma tarea: el instructivo (IT), la MIPER y la evaluación. Se extrae el texto y las tablas, y la IA arma el instructivo con sus 13 secciones, la MIPER fila por fila y la evaluación con su pauta. El contenido se conserva tal como está escrito; lo que falte queda marcado “[completar]”.</p>
+      <div class="row"><label class="btn orange" for="wd">Elegir archivos .docx</label><input type="file" id="wd" multiple accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden><span class="small muted">${w.files.length?esc(w.files.join(" · ")):"Ningún archivo seleccionado"}</span></div>
+      <div class="grid"><label class="f">Código<input type="text" id="w-cod" data-k="codigo" value="${esc(w.codigo)}" placeholder="Se toma del documento"></label>
+        <label class="f">Área<select id="w-area" data-k="area">${AREAS.map(a=>`<option${a===w.area?" selected":""}>${esc(a)}</option>`).join("")}</select></label></div>
+      <label class="f">Texto extraído <span class="hint">Puede revisarlo o pegar aquí el texto de un PDF</span><textarea id="w-tx" data-k="texto" rows="12">${esc(w.texto)}</textarea></label>
+      <div class="row"><button class="btn primary" id="w-run" ${S.sample?"":"disabled"}>Convertir al formato HTP</button><span class="small muted" id="w-st"></span></div>
+      ${S.sample?"":'<p class="hint">La IA no está disponible en esta vista.</p>'}</section>
+      <section class="panel"><h2>Qué pasa después</h2><div class="stack small"><p>El resultado se abre en el editor como <b>borrador</b> con la identificación, las secciones, la MIPER y la evaluación para revisar.</p><p>Si el código ya existe en la biblioteca, se abre ese instructivo para actualizarlo.</p><p class="muted">Para muchos instructivos a la vez, la planilla Excel es más rápida.</p></div></section></div>`;
+    bindInputs($("#wf",c),w);
+    $("#wd",c).onchange=async e=>{const fs=[...e.target.files];if(!fs.length||!needLib("el lector de Word","mammoth"))return;
+      const parts=[];const names=[];
+      for(const f of fs){try{const r=await window.mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()});const box=document.createElement("div");box.innerHTML=r.value;
+          parts.push(`===== ARCHIVO: ${f.name} =====`);
+          box.childNodes.forEach(n=>{if(n.tagName==="TABLE"){parts.push("[TABLA]");n.querySelectorAll("tr").forEach(tr=>parts.push([...tr.children].map(td=>td.textContent.trim().replace(/\s+/g," ")).join(" | ")));parts.push("[FIN TABLA]")}
+            else if(n.tagName==="UL"||n.tagName==="OL"){n.querySelectorAll("li").forEach(li=>parts.push("- "+li.textContent.trim()))}
+            else{const t=(n.textContent||"").trim();if(t)parts.push(t)}});
+          names.push(f.name)}catch(err){toast(`No se pudo leer ${f.name}. Verifique que sea .docx (no .doc antiguo).`)}}
+      w.texto=parts.join("\n");w.files=names;if(!w.codigo){const m=w.texto.match(/\b(?:IT|PR|PO|PTS|INS)-\d{2,3}-\d{2,4}\b/);if(m)w.codigo=m[0]}
+      this.renderWord();if(names.length)toast(`Texto extraído de ${names.length} archivo${names.length>1?"s":""}. Revíselo y presione Convertir.`)};
+    $("#w-run",c).onclick=()=>this.convertWord();
+  },
+  async convertWord(){
+    const w=this.word;if(w.texto.trim().length<80)return toast("Suba los Word o pegue el texto del instructivo");
+    const b=$("#w-run"),st=$("#w-st");b.disabled=true;b.innerHTML='<span class="spin"></span> Convirtiendo…';const t0=Date.now();const tick=setInterval(()=>st.textContent=`${Math.round((Date.now()-t0)/1000)} s`,1000);
+    const prompt=`Convierte documentos existentes de ${HTP_CTX}
+Son documentos vigentes (instructivo de trabajo, MIPER y/o evaluación de una misma tarea). CONSERVA su contenido y redacción; solo ordénalo en el formato. No inventes pasos, cifras, equipos ni responsables. Si una sección del formato no tiene contenido en el original, escribe "[completar: ...]" breve.
+Las tablas vienen entre [TABLA] y [FIN TABLA] con celdas separadas por "|". Copia la identificación del documento (proceso, subproceso, actividad, sistemas de gestión, versión, versión anterior) y el bloque Elaboró/Revisó/Aprobó en "firmasDoc" {"elaboro":{"nombre","cargo","fecha"},"reviso":{...},"aprobo":{...}} (deja vacío lo que diga [Nombre] o [dd/mm/aaaa]).
+Si viene la MIPER, pasa cada fila de su tabla principal a "matriz" respetando exactamente P, C, VEP, controles y responsables; usa también sus datos generales (tarea, tipo de tarea, lugares). Si NO viene MIPER, deja "matriz" vacía.
+Si viene la evaluación con su pauta de corrección, copia cada afirmación y su respuesta (V → ok 0, F → ok 1) y la justificación exacta en "preguntasProc". Si NO viene evaluación, créala según las reglas.
+
+${AI_RULES}
+
+Devuelve SOLO JSON con esta forma (agrega "firmasDoc"):
+${AI_SHAPE}
+
+CÓDIGO INDICADO: ${w.codigo||"(tomar del documento)"}
+DOCUMENTOS:
+${w.texto.slice(0,70000)}`;
+    try{const r=await S.sample.json(prompt,{modelTier:"complex"});clearInterval(tick);
+      const d=draftFromAI(r,{codigo:w.codigo,titulo:(w.files[0]||"").replace(/\.docx$/i,""),area:w.area});
+      const dup=S.procs.find(p=>d.codigo&&normCode(p.codigo)===normCode(d.codigo));
+      if(dup){d.id=dup.id;d.docAssetId=dup.docAssetId||null;d.docNombre=dup.docNombre||null;d.docUrl=dup.docUrl||null;d.createdAt=dup.createdAt;S.draft=d;this.word=null;toast(`El código ${d.codigo} ya existe: se abrió para actualizarlo.`);location.hash="#editar-"+dup.id;return}
+      S.draft=d;this.word=null;toast("Documentos convertidos. Revíselos en el editor.");location.hash="#nuevo";
+    }catch(e){clearInterval(tick);st.textContent="";b.disabled=false;b.textContent="Convertir al formato HTP";
+      toast(e.code==="not_granted"?"No se autorizó el uso de IA en esta página.":e.code==="rate_limited"?"Límite de uso alcanzado. Intente más tarde.":e.code==="invalid_json"?"La respuesta llegó incompleta. Intente con menos documentos a la vez.":errMsg(e))}
+  }
+};
+
+/* ---------- exportaciones ---------- */
+async function saveFile(filename,data){
+  if(!S.downloads){toast("La descarga de archivos no está disponible en esta vista.");return}
+  try{const r=await S.downloads.save({filename,data});if(r&&r.status==="saved")toast("Archivo descargado: "+filename)}
+  catch(e){if(e.code!=="cancelled"&&e.code!=="declined")toast(e.code==="unavailable"?"La descarga no está disponible en esta vista.":errMsg(e))}
+}
+function exportCSV(){
+  const rows=[["Fecha","Código","Instructivo","Versión","Nombre","RUT","Cargo","Empresa","Turno","Relator","Modo","IT difundida","Puntaje IT","IT aprobada","MIPER difundida","Puntaje MIPER","MIPER aprobada","Anulado"]];
+  allRegs().sort((a,b)=>a.fecha-b.fecha).forEach(r=>rows.push([fmtDT(r.fecha),r.codigo,r.titulo,r.version,r.nombre,fmtRut(r.rut),r.cargo,r.empresa,r.turno,r.relator||"",r.modo==="completa"?"Difusión y evaluación":"Solo difusión",r.procLeido?"Sí":"No",r.procPuntaje||(r.procNota??""),r.procOk?"Sí":"No",r.matLeida?"Sí":"No",r.matPuntaje||(r.matNota??""),r.matOk?"Sí":"No",r.anulado?"Sí":"No"]));
+  if(rows.length===1)return toast("No hay registros para exportar");
+  const csv="﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\r\n");
+  saveFile(`Registros_difusion_HTP_${new Date().toISOString().slice(0,10)}.csv`,new Blob([csv],{type:"text/csv;charset=utf-8"}));
+}
+function docxKit(){
+  const X=window.docx;const NAVY="1F3A6E",ORANGE="E8804A",GRAY="E9EDF4";
+  const run=(t,o={})=>new X.TextRun({text:String(t??""),bold:o.bold,italics:o.italics,color:o.color,size:o.size||20,font:"Calibri",break:o.br});
+  const para=(t,o={})=>{const lines=String(t??"").split("\n");return new X.Paragraph({children:lines.map((l,i)=>run(l,{...o,br:i?1:0})),spacing:{after:o.after??60,before:o.before},alignment:o.align,pageBreakBefore:o.pb})};
+  const cell=(c,o={})=>new X.TableCell({children:Array.isArray(c)?c:[para(c,{size:o.size||17,bold:o.bold,color:o.color,after:0,align:o.align})],shading:o.fill?{type:X.ShadingType.CLEAR,color:"auto",fill:o.fill}:undefined,columnSpan:o.span,verticalAlign:o.va,margins:{top:50,bottom:50,left:80,right:80}});
+  const table=(rows,pcts,land)=>{const tot=land?13958:9026;const cw=pcts.map(p=>Math.round(tot*p/100));return new X.Table({width:{size:tot,type:X.WidthType.DXA},columnWidths:cw,layout:X.TableLayoutType.FIXED,rows})};
+  const tr=(cells,o={})=>new X.TableRow({children:cells,tableHeader:o.header,height:o.h?{value:o.h,rule:"atLeast"}:undefined});
+  const heading=t=>new X.Paragraph({children:[run(t,{bold:true,color:NAVY,size:24})],spacing:{before:280,after:100},border:{bottom:{style:X.BorderStyle.SINGLE,size:8,color:ORANGE,space:2}}});
+  const blocks=t=>textBlocks(t).flatMap(b=>{
+    if(b.type==="list")return b.items.map(i=>new X.Paragraph({children:[run(i)],bullet:{level:0},spacing:{after:40}}));
+    if(b.type==="sub")return[para(b.text,{bold:true,color:NAVY,before:120})];
+    if(b.type==="table"){const n=Math.max(...b.rows.map(r=>r.length));const avg=Array.from({length:n},(_,j)=>Math.max(5,b.rows.reduce((a,r)=>a+Math.min(90,String(r[j]??"").length),0)/b.rows.length));const sum=avg.reduce((a,x)=>a+x,0);const pc=avg.map(x=>x*100/sum);return[table(b.rows.map((r,i)=>tr(Array.from({length:n},(_,j)=>cell(r[j]??"",i===0?{bold:true,color:"FFFFFF",fill:NAVY}:{})),{header:i===0})),pc),para("",{after:80})]}
+    return[para(b.text)];
+  });
+  let logo=null;try{const b=atob(LOGO.split(",")[1]);const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);logo=new X.ImageRun({data:u,transformation:{width:150,height:30}})}catch{}
+  const header=(kind,p,land)=>table([tr([cell([new X.Paragraph({children:[logo||run("HTP",{bold:true,color:NAVY})]})],{w:24,va:"center"}),
+    cell([para(kind,{size:15,color:"5A6781",after:20}),para(p.titulo,{bold:true,color:NAVY,size:26,after:0})],{w:52,va:"center"}),
+    cell([para(p.codigo||"—",{bold:true,size:20,after:0}),para("Versión "+(p.version||""),{size:17,after:0})],{w:24,va:"center"})])],[24,52,24],land);
+  return{X,NAVY,GRAY,run,para,cell,table,tr,heading,blocks,header};
+}
+async function downloadWord(p){
+  if(!window.docx){toast("No se pudo cargar el generador de Word. Recargue la página.");return}
+  const K=docxKit(),{X,NAVY,GRAY,para,cell,table,tr,heading,blocks}=K;const f=withFirmas(p);const L=(t)=>cell(t,{bold:true,fill:GRAY});
+  const body=[K.header("INSTRUCTIVO DE TRABAJO",p),para("",{after:120}),
+    table([tr([cell("IDENTIFICACIÓN DEL DOCUMENTO",{bold:true,color:"FFFFFF",fill:NAVY,span:4})]),
+      tr([L("Proceso"),cell(p.proceso||""),L("Subproceso"),cell(p.subproceso||"")]),
+      tr([L("Actividad"),cell(p.actividad||"",{span:3})]),
+      tr([L("Sistemas de gestión"),cell(p.sistemas||"",{span:3})]),
+      tr([L("Versión"),cell(p.version||""),L("Versión anterior"),cell(p.versionAnterior||"")])],[20,30,20,30]),
+    para("",{after:120}),
+    table([tr([cell(""),...FIRMAS_K.map(([,l])=>cell(l,{bold:true,color:"FFFFFF",fill:NAVY}))]),
+      ...[["nombre","Nombre"],["cargo","Cargo"],["fecha","Fecha"]].map(([k,l])=>tr([L(l),...FIRMAS_K.map(([x])=>cell(f[x][k]||""))])),
+      tr([L("Firma"),cell(""),cell(""),cell("")],{h:700})],[16,28,28,28])];
+  (p.secciones||[]).forEach(s=>{body.push(heading(s.titulo));body.push(...blocks(s.texto))});
+  const sections=[{children:body}];
+  if((p.matriz||[]).length){
+    const hdr=["N°","Etapa / pasos IT","Puestos expuestos","Peligro (GEMA)","Riesgo (código ISP)","Daño probable","P","C","VEP inicial","Medidas de control (DS 44)","P","C","VEP residual","Responsable"];
+    const fill={ok:"E2F2E9",info:"E3EAF6",warn:"FBEFD6",bad:"F8E1DF"};
+    const vep=(a,b,t)=>{if(a==null||b==null)return cell(t||"—",{size:14});const m=mrInfo(a,b);return cell(`${m.v} ${m.t}`,{bold:true,fill:fill[m.k],size:14})};
+    const rows=[tr(hdr.map(t=>cell(t,{bold:true,color:"FFFFFF",fill:NAVY,size:14})),{header:true}),
+      ...p.matriz.map((r0,i)=>{const r=normRow(r0);return tr([cell(i+1,{size:14}),cell(r.etapa,{size:14}),cell(r.puestos,{size:14}),cell(r.peligro,{size:14}),cell(r.riesgo,{size:14}),cell(r.dano,{size:14}),cell(r.p??"",{size:14}),cell(r.c??"",{size:14}),vep(r.p,r.c,r.evalIni),cell(r.control,{size:14}),cell(r.pr??"",{size:14}),cell(r.cr??"",{size:14}),vep(r.pr,r.cr,r.evalRes),cell(r.responsable,{size:14})])})];
+    sections.push({properties:{page:{size:{orientation:X.PageOrientation.LANDSCAPE}}},children:[K.header("MIPER · MATRIZ DE IDENTIFICACIÓN DE PELIGROS Y EVALUACIÓN DE RIESGOS (DS 44)",p,true),para("",{after:80}),
+      table([tr([L("Tarea"),cell(p.tarea||p.actividad||""),L("Tipo de tarea"),cell(p.tipoTarea||"")]),tr([L("Lugares específicos"),cell(p.lugares||"",{span:3})]),tr([L("Metodología"),cell("Guía ISP para la Identificación y Evaluación de Riesgos en los Lugares de Trabajo — VEP = P × C",{span:3})])],[15,45,15,25],true),
+      para("",{after:80}),table(rows,[3,9,8,12,9,8,3,3,7,19,3,3,7,6],true),para("VEP = P × C. P: 1 baja · 2 media · 4 alta. C: 1 ligeramente dañino · 2 dañino · 4 extremadamente dañino. 1–2 Tolerable · 4 Moderado · 8 Importante · 16 Intolerable.",{size:15,color:"5A6781",before:80})]});
+  }
+  try{const blob=await X.Packer.toBlob(new X.Document({creator:"HTP",title:p.titulo||"Instructivo",sections}));
+    await saveFile(`${(p.codigo||"Instructivo").replace(/[^\w.-]+/g,"_")}_v${String(p.version).replace(/[^\w]+/g,"")}.docx`,blob)}
+  catch(e){toast("No se pudo generar el Word: "+(e.message||e))}
+}
+async function downloadEvalWord(p){
+  if(!window.docx){toast("No se pudo cargar el generador de Word. Recargue la página.");return}
+  const K=docxKit(),{X,NAVY,GRAY,para,cell,table,tr}=K;const L=t=>cell(t,{bold:true,fill:GRAY});
+  const sets=[["Evaluación del instructivo",p.preguntasProc||[]],["Evaluación de la MIPER",p.preguntasMat||[]]].filter(s=>s[1].length);
+  if(!sets.length)return toast("Este instructivo no tiene preguntas.");
+  const children=[];
+  sets.forEach(([titulo,qs],si)=>{
+    const min=Math.ceil(qs.length*(+p.aprobacion||80)/100);const allVF=qs.every(q=>q.tipo==="vf");
+    if(si)children.push(para("",{pb:true,after:0}));
+    children.push(K.header("EVALUACIÓN · "+titulo.toUpperCase(),p));
+    children.push(para("",{after:100}));
+    children.push(table([tr([cell("DATOS DEL EVALUADO",{bold:true,color:"FFFFFF",fill:NAVY,span:4})]),tr([L("Nombre"),cell(""),L("RUT"),cell("")]),tr([L("Cargo"),cell(""),L("Empresa"),cell("")]),tr([L("Fecha"),cell(""),L("Relator"),cell("")])],[15,35,15,35]));
+    children.push(para(`Instrucciones: ${allVF?"lea cada afirmación y marque con una X si es Verdadera (V) o Falsa (F).":"marque la alternativa correcta."} Cada respuesta correcta vale 1 punto. Se aprueba con ${min} de ${qs.length} respuestas correctas.`,{before:160,after:120}));
+    const rows=allVF?[tr([cell("N°",{bold:true,color:"FFFFFF",fill:NAVY,w:7}),cell("Afirmación",{bold:true,color:"FFFFFF",fill:NAVY,w:79}),cell("V",{bold:true,color:"FFFFFF",fill:NAVY,w:7,align:X.AlignmentType.CENTER}),cell("F",{bold:true,color:"FFFFFF",fill:NAVY,w:7,align:X.AlignmentType.CENTER})],{header:true}),...qs.map((q,i)=>tr([cell(i+1,{bold:true}),cell(q.q),cell(""),cell("")]))]
+      :[tr([cell("N°",{bold:true,color:"FFFFFF",fill:NAVY,w:7}),cell("Pregunta y alternativas",{bold:true,color:"FFFFFF",fill:NAVY,w:93})],{header:true}),...qs.map((q,i)=>tr([cell(i+1,{bold:true}),cell([para(q.q,{size:18,after:20}),...(q.tipo==="vf"?["V  ·  F"]:q.ops.map((o,j)=>`${"abcd"[j]}) ${o}`)).map(t=>para(t,{size:17,after:0}))])]))];
+    children.push(table(rows,allVF?[7,79,7,7]:[7,93]));
+    children.push(para("",{after:120}));
+    children.push(table([tr(["Puntaje obtenido","Resultado","Firma evaluado","Firma relator"].map(t=>cell(t,{bold:true,fill:GRAY}))),tr([cell(`______ / ${qs.length}`),cell("Aprobado / Reprobado"),cell(""),cell("")],{h:800})],[25,25,25,25]));
+  });
+  children.push(para("PAUTA DE CORRECCIÓN — USO EXCLUSIVO DEL RELATOR",{bold:true,color:NAVY,size:24,pb:true}));
+  children.push(para("No entregar esta hoja al evaluado.",{italics:true,after:120}));
+  sets.forEach(([titulo,qs])=>{
+    children.push(para(titulo,{bold:true,before:120}));
+    children.push(table([tr([cell("N°",{bold:true,color:"FFFFFF",fill:NAVY,w:7}),cell("Respuesta",{bold:true,color:"FFFFFF",fill:NAVY,w:15}),cell(`Justificación según ${p.codigo||"IT"}`,{bold:true,color:"FFFFFF",fill:NAVY,w:78})],{header:true}),
+      ...qs.map((q,i)=>tr([cell(i+1,{bold:true}),cell(q.tipo==="vf"?(q.ok?"F":"V"):"abcd"[q.ok]||"",{bold:true}),cell(q.just||"")]))],[7,15,78]));
+  });
+  try{const blob=await X.Packer.toBlob(new X.Document({creator:"HTP",title:"Evaluación "+(p.codigo||""),sections:[{children}]}));
+    await saveFile(`Evaluacion_${(p.codigo||"IT").replace(/[^\w.-]+/g,"_")}_v${String(p.version).replace(/[^\w]+/g,"")}.docx`,blob)}
+  catch(e){toast("No se pudo generar el Word: "+(e.message||e))}
+}
+async function registroPDF(p,regs){
+  if(!window.jspdf||!window.jspdf.jsPDF){toast("No se pudo cargar el generador de PDF. Recargue la página.");return}
+  if(!regs.length)return toast("No hay registros para este instructivo");
+  toast("Preparando PDF…");
+  const firmas=await Promise.all(regs.map(r=>S.db.doc(`evaluaciones/${r.owner}/firmas/${r.id}`).get().then(s=>s.exists?s.data():{}).catch(()=>({}))));
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});const W=doc.internal.pageSize.getWidth();
+  const header=()=>{try{doc.addImage(LOGO,"PNG",12,9,40,8)}catch{}doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(31,58,110);doc.text("REGISTRO DE DIFUSIÓN Y EVALUACIÓN",W/2,14,{align:"center"});
+    doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(60,70,90);doc.text(`Unidad Terminal Marítimo · ${fmtDate(Date.now())}`,W-12,14,{align:"right"});doc.setDrawColor(232,128,74);doc.setLineWidth(.6);doc.line(12,20,W-12,20)};
+  header();
+  doc.autoTable({startY:24,theme:"grid",styles:{fontSize:8.5,cellPadding:1.8,textColor:[21,34,59]},
+    body:[["Código",p.codigo||"—","Versión",String(p.version),"Proceso",p.proceso||p.area||"—"],["Instructivo",{content:p.titulo,colSpan:3},"Aprobación",(p.aprobacion||80)+"%"]],columnStyles:{0:{fontStyle:"bold"},2:{fontStyle:"bold"},4:{fontStyle:"bold"}}});
+  const body=regs.map((r,i)=>[i+1,r.nombre,fmtRut(r.rut),r.cargo||"",r.empresa||"",fmtDT(r.fecha),r.procLeido?"Sí":"No",r.procPuntaje?`${r.procPuntaje} ${r.procOk?"Aprob.":"Reprob."}`:(r.procNota!=null?`${r.procNota}%`:"—"),r.matLeida?"Sí":"No",r.matPuntaje?`${r.matPuntaje} ${r.matOk?"Aprob.":"Reprob."}`:(r.matNota!=null?`${r.matNota}%`:"—"),"",r.relator||"",""]);
+  doc.autoTable({startY:doc.lastAutoTable.finalY+5,theme:"grid",head:[["N°","Nombre","RUT","Cargo","Empresa","Fecha","IT difundida","Eval. IT","MIPER difundida","Eval. MIPER","Firma evaluado","Relator","Firma relator"]],body,
+    styles:{fontSize:7.5,cellPadding:1.4,valign:"middle",textColor:[21,34,59],minCellHeight:13},headStyles:{fillColor:[31,58,110],textColor:255,fontStyle:"bold",valign:"middle"},
+    columnStyles:{0:{cellWidth:7},2:{cellWidth:19},4:{cellWidth:18},5:{cellWidth:20},6:{cellWidth:13},7:{cellWidth:18},8:{cellWidth:14},9:{cellWidth:18},10:{cellWidth:30},11:{cellWidth:24},12:{cellWidth:30}},
+    margin:{top:24,left:12,right:12},didDrawPage:d=>{if(d.pageNumber>1)header()},
+    didDrawCell:d=>{if(d.section!=="body"||(d.column.index!==10&&d.column.index!==12))return;const f=firmas[d.row.index]||{};const img=d.column.index===10?f.img:f.imgRelator;
+      if(img){const w=d.cell.width-4,h=Math.min(d.cell.height-2,w/3);try{doc.addImage(img,"PNG",d.cell.x+2,d.cell.y+(d.cell.height-h)/2,w,h)}catch{}}}});
+  const n=doc.internal.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFontSize(7.5);doc.setTextColor(110,118,135);doc.text(`Huachipato Terminal Portuario · Registro generado ${fmtDT(Date.now())} · Página ${i} de ${n}`,12,doc.internal.pageSize.getHeight()-7)}
+  await saveFile(`Registro_${(p.codigo||"IT").replace(/[^\w.-]+/g,"_")}_v${String(p.version).replace(/[^\w]+/g,"")}${regs.length===1?"_"+regs[0].nombre.split(" ")[0]:""}.pdf`,doc.output("blob"));
+}
+
+/* ---------- conexión Firebase ---------- */
+const ROLES={pendiente:["Pendiente","warn"],colaborador:["Colaborador","info"],editor:["Editor","ok"],admin:["Administrador","ok"]};
+let auth=null,fdb=null,storage=null,dataUnsubs=[],userUnsub=null;
+function stopData(){dataUnsubs.forEach(u=>{try{u()}catch{}});dataUnsubs=[];subs.regs={};subs.mej={};S.procs=[];S.personal=[];S.regs={};S.mejoras={};S.usuarios=[];S.loaded=false;S.dbErr=null}
+function fbErr(e){
+  const m={"auth/invalid-email":"El correo no es válido.","auth/user-not-found":"No existe una cuenta con ese correo.","auth/wrong-password":"Contraseña incorrecta.","auth/invalid-credential":"Correo o contraseña incorrectos.","auth/email-already-in-use":"Ya existe una cuenta con ese correo. Use “Ingresar”.","auth/weak-password":"La contraseña debe tener al menos 6 caracteres.","auth/too-many-requests":"Demasiados intentos. Espere unos minutos.","auth/network-request-failed":"Sin conexión a internet.","auth/popup-closed-by-user":"Se cerró la ventana de inicio de sesión.","auth/unauthorized-domain":"Este dominio no está autorizado en Firebase (Authentication → Settings → Authorized domains)."};
+  return m[e&&e.code]||(e&&e.message)||"No se pudo completar la acción.";
+}
+async function fetchNames(){const map={};(S.usuarios||[]).forEach(u=>map[u.id]=u.nombre||u.email);Object.assign(S.names,map)}
+const queueNames=()=>fetchNames();
+function subRegs(uid){
+  if(subs.regs[uid])return;
+  subs.regs[uid]=S.db.collection(`evaluaciones/${uid}/regs`).onSnapshot(s=>{S.regs[uid]=s.docs.map(d=>({id:d.id,owner:uid,...d.data()}));update()},()=>{});
+  dataUnsubs.push(subs.regs[uid]);
+}
+function subMej(uid){
+  if(subs.mej[uid])return;
+  subs.mej[uid]=S.db.collection(`mejoras/${uid}/items`).onSnapshot(s=>{S.mejoras[uid]=s.docs.map(d=>({id:d.id,owner:uid,...d.data()}));update()},()=>{});
+  dataUnsubs.push(subs.mej[uid]);
+}
+function aiAdapter(){
+  return{json:async(prompt,opts={})=>{
+    if(CFG.funcionIA&&firebase.functions){
+      try{const fn=firebase.app().functions(CFG.regionIA||"us-central1").httpsCallable(CFG.funcionIA,{timeout:540000});const r=await fn({prompt,nivel:opts.modelTier||"default"});return r.data}
+      catch(e){throw{code:e.code==="functions/resource-exhausted"||e.code==="resource-exhausted"?"rate_limited":e.code==="functions/permission-denied"||e.code==="permission-denied"?"not_granted":"error",message:e.message}}
+    }
+    return manualAI(prompt);
+  }};
+}
+function manualAI(prompt){
+  return new Promise((resolve,reject)=>{
+    const dlg=$("#ai-dlg");$("#ai-prompt").value=prompt;$("#ai-resp").value="";$("#ai-err").textContent="";
+    const close=()=>{dlg.close();$("#ai-ok").onclick=null;$("#ai-cancel").onclick=null;dlg.oncancel=null};
+    $("#ai-copy").onclick=async()=>{try{await navigator.clipboard.writeText(prompt);toast("Instrucción copiada. Péguela en Claude.")}catch{$("#ai-prompt").select();toast("Texto seleccionado: cópielo con Ctrl+C")}};
+    $("#ai-ok").onclick=()=>{const t=$("#ai-resp").value;const a=t.indexOf("{"),b=t.lastIndexOf("}");
+      if(a<0||b<a){$("#ai-err").textContent="No se encontró JSON en la respuesta. Copie la respuesta completa de Claude.";return}
+      try{const j=JSON.parse(t.slice(a,b+1));close();resolve(j)}catch{$("#ai-err").textContent="La respuesta está incompleta o tiene un error de formato. Pida a Claude que la repita completa."}};
+    $("#ai-cancel").onclick=()=>{close();reject({code:"cancelled",message:"Generación cancelada."})};
+    dlg.oncancel=e=>{e.preventDefault();$("#ai-cancel").click()};
+    dlg.showModal();
+  });
+}
+function showLogin(){
+  document.body.classList.remove("authok");$("#who").innerHTML="";$("#status").textContent="";
+  const el=$("#view");
+  el.innerHTML=`<section class="login panel stack"><div><p class="eyebrow">Unidad Terminal Marítimo</p><h1>Ingresar</h1><p class="lede">Use su correo y contraseña. Si es primera vez, cree su cuenta; el administrador la aprobará.</p></div>
+    <div class="subtabs" role="tablist"><button role="tab" data-m="in" aria-selected="true">Ingresar</button><button role="tab" data-m="up" aria-selected="false">Crear cuenta</button></div>
+    <form id="lf" class="stack" novalidate>
+      <label class="f" data-only="up" hidden>Nombre completo<input type="text" id="l-n" autocomplete="name"></label>
+      <label class="f">Correo<input type="text" id="l-e" inputmode="email" autocomplete="email"></label>
+      <label class="f">Contraseña<input type="password" id="l-p" autocomplete="current-password"></label>
+      <p class="small" id="l-err" style="color:var(--bad)"></p>
+      <div class="row"><button class="btn primary" type="submit" id="l-go">Ingresar</button><button class="btn ghost" type="button" id="l-reset" data-only="in">Olvidé mi contraseña</button></div>
+    </form>
+    ${CFG.loginMicrosoft?'<div class="row"><span class="sp hint">o</span></div><button class="btn" id="l-ms">Ingresar con cuenta Microsoft 365</button>':""}</section>`;
+  let mode="in";
+  const setMode=m=>{mode=m;$$(".login .subtabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.m===m));$$("[data-only]").forEach(x=>x.hidden=x.dataset.only!==m);$("#l-go").textContent=m==="in"?"Ingresar":"Crear cuenta";$("#l-p").autocomplete=m==="in"?"current-password":"new-password";$("#l-err").textContent=""};
+  $$(".login .subtabs button").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+  $("#lf").onsubmit=async e=>{e.preventDefault();const em=$("#l-e").value.trim(),pw=$("#l-p").value,nm=$("#l-n").value.trim();$("#l-err").textContent="";
+    if(mode==="up"&&nm.length<3){$("#l-err").textContent="Ingrese su nombre completo.";return}
+    $("#l-go").disabled=true;
+    try{if(mode==="in")await auth.signInWithEmailAndPassword(em,pw);else{const c=await auth.createUserWithEmailAndPassword(em,pw);await c.user.updateProfile({displayName:nm});S.pendingName=nm}}
+    catch(err){$("#l-err").textContent=fbErr(err)}$("#l-go").disabled=false};
+  $("#l-reset").onclick=async()=>{const em=$("#l-e").value.trim();if(!em){$("#l-err").textContent="Escriba su correo y presione de nuevo.";return}
+    try{await auth.sendPasswordResetEmail(em);toast("Le enviamos un correo para restablecer la contraseña.")}catch(err){$("#l-err").textContent=fbErr(err)}};
+  $("#l-ms")&&($("#l-ms").onclick=async()=>{const p=new firebase.auth.OAuthProvider("microsoft.com");if(CFG.microsoftTenant)p.setCustomParameters({tenant:CFG.microsoftTenant});try{await auth.signInWithPopup(p)}catch(err){$("#l-err").textContent=fbErr(err)}});
+}
+function showPending(u){
+  document.body.classList.remove("authok");
+  $("#view").innerHTML=`<section class="login panel stack"><p class="eyebrow">Cuenta creada</p><h1>Pendiente de aprobación</h1>
+    <p>La cuenta <b>${esc(u.email||"")}</b> espera que el administrador le asigne un rol. Cuando lo haga, esta página se actualizará sola.</p><div class="row"><button class="btn" id="out2">Cerrar sesión</button></div></section>`;
+  $("#out2").onclick=()=>auth.signOut();
+}
+function renderWho(u){
+  const [rl,rk]=ROLES[S.rol]||["",""];
+  $("#who").innerHTML=`<span class="who-n">${esc(S.me?.name||u.email)}</span><span class="chip ${rk}">${rl}</span><button class="btn sm" id="out">Salir</button>`;
+  $("#out").onclick=()=>auth.signOut();
+}
+function startData(u){
+  stopData();
+  S.db=fdb;S.canEdit=["editor","admin"].includes(S.rol);S.isAdmin=S.rol==="admin";
+  S.assets=(S.canEdit&&storage)?{upload:async f=>{const path=`procedimientos/${nid()}_${f.name.replace(/[^\w.-]+/g,"_")}`;const ref=storage.ref(path);await ref.put(f,{contentType:f.type||"application/pdf"});return{id:path,url:await ref.getDownloadURL()}}}:null;
+  document.body.classList.add("authok");$("#nav-us").hidden=!S.isAdmin;$("#nav-cg").hidden=!S.canEdit;renderWho(u);
+  const timer=setTimeout(()=>{S.slow=true;updateStatus()},10000);
+  dataUnsubs.push(fdb.collection("procedimientos").onSnapshot(s=>{S.procs=s.docs.map(d=>({id:d.id,...d.data()}));if(!s.metadata.fromCache){S.loaded=true;clearTimeout(timer)}update()},e=>{S.dbErr=errMsg(e);clearTimeout(timer);update()}));
+  dataUnsubs.push(fdb.collection("personal").onSnapshot(s=>{S.personal=s.docs.map(d=>({id:d.id,...d.data()}));S.personalErr=false;update()},()=>{S.personalErr=true;update()}));
+  subRegs(S.uid);
+  dataUnsubs.push(fdb.collection("evaluaciones").onSnapshot(s=>s.docs.forEach(d=>subRegs(d.id)),()=>{}));
+  subMej(S.uid);
+  if(S.canEdit){
+    dataUnsubs.push(fdb.collection("mejoras").onSnapshot(s=>s.docs.forEach(d=>subMej(d.id)),()=>{}));
+    dataUnsubs.push(fdb.collection("usuarios").onSnapshot(s=>{S.usuarios=s.docs.map(d=>({id:d.id,...d.data()}));fetchNames();update()},()=>{}));
+  }
+  route();
+}
+views.usuarios={
+  mount(el){el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Administración</p><h1>Usuarios y roles</h1><p class="lede">Apruebe las cuentas nuevas y asigne su rol. <b>Colaborador</b>: registra difusiones, firmas, personal y mejoras. <b>Editor</b>: además crea, carga y edita procedimientos y responde mejoras. <b>Administrador</b>: además gestiona usuarios.</p></div></section><section class="panel"><div data-slot="u"></div></section>`;this.update()},
+  update(){
+    const box=$('#view [data-slot="u"]');if(!box)return;if(!S.isAdmin){box.innerHTML='<div class="empty"><b>Solo el administrador gestiona usuarios.</b></div>';return}
+    const list=(S.usuarios||[]).slice().sort((a,b)=>(a.rol==="pendiente"?0:1)-(b.rol==="pendiente"?0:1)||String(a.nombre).localeCompare(String(b.nombre)));
+    if(!list.length){box.innerHTML='<div class="empty">Sin usuarios registrados.</div>';return}
+    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Creado</th><th>Rol</th></tr></thead><tbody>${list.map(u=>`<tr><td>${esc(u.nombre)}${u.id===S.uid?' <span class="chip">usted</span>':""}</td><td class="small">${esc(u.email)}</td><td class="code">${fmtDate(u.creado)}</td><td><select data-rol="${esc(u.id)}" ${u.id===S.uid?"disabled":""} style="max-width:180px">${Object.entries(ROLES).map(([k,[l]])=>`<option value="${k}"${u.rol===k?" selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`;
+    $$("[data-rol]",box).forEach(s=>s.onchange=async()=>{try{await fdb.doc(`usuarios/${s.dataset.rol}`).update({rol:s.value});toast("Rol actualizado")}catch(e){toast(errMsg(e))}});
+  }
+};
+async function boot(){
+  if(!window.firebase||!CFG.firebase||!CFG.firebase.apiKey){$("#status").textContent="";$("#view").innerHTML='<div class="empty"><b>Falta configurar Firebase.</b>Complete el archivo firebase-config.js con los datos de su proyecto (vea README.md).</div>';return}
+  firebase.initializeApp(CFG.firebase);auth=firebase.auth();fdb=firebase.firestore();storage=(CFG.usarStorage&&firebase.storage)?firebase.storage():null;
+  S.downloads={save:async({filename,data})=>{const blob=data instanceof Blob?data:new Blob([data]);const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000);return{status:"saved"}}};
+  S.sample=aiAdapter();S.ready=true;
+  auth.onAuthStateChanged(async u=>{
+    if(userUnsub){userUnsub();userUnsub=null}stopData();S.db=null;
+    if(!u){S.uid=null;showLogin();return}
+    S.uid=u.uid;$("#status").textContent="Verificando cuenta…";
+    const ref=fdb.doc(`usuarios/${u.uid}`);
+    try{const s=await ref.get();if(!s.exists)await ref.set({nombre:S.pendingName||u.displayName||u.email,email:u.email||"",rol:"pendiente",creado:Date.now()})}catch(e){$("#status").textContent="No se pudo registrar la cuenta: "+errMsg(e);return}
+    let lastRol=null;
+    userUnsub=ref.onSnapshot(s=>{const d=s.data()||{};S.me={name:d.nombre||u.displayName||u.email};S.rol=d.rol||"pendiente";
+      if(S.rol===lastRol){renderWho(u);return}lastRol=S.rol;
+      if(S.rol==="pendiente"){stopData();S.db=null;$("#status").textContent="";showPending(u);return}
+      if(S.ev&&!S.ev.w.nombre)S.ev.w.nombre=S.me.name;startData(u)},e=>{$("#status").textContent="No se pudo leer su cuenta: "+errMsg(e)});
+  });
+}
+boot();
+</script>
+
+</body>
+</html>

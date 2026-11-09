@@ -1,0 +1,73 @@
+rules_version = '2';
+
+// Reglas de acceso de la aplicación de Procedimientos HTP.
+// Roles (campo "rol" en usuarios/{uid}): pendiente · colaborador · editor · admin
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function perfil() { return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data; }
+    function aprobado() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && perfil().rol in ['colaborador', 'editor', 'admin'];
+    }
+    function editor() { return aprobado() && perfil().rol in ['editor', 'admin']; }
+    function admin() { return aprobado() && perfil().rol == 'admin'; }
+    function propio(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Cuentas: cada persona crea la suya como "pendiente"; solo el administrador asigna roles.
+    match /usuarios/{uid} {
+      allow read: if propio(uid) || editor();
+      allow create: if propio(uid) && request.resource.data.rol == 'pendiente';
+      allow update: if admin()
+        || (propio(uid) && request.resource.data.rol == resource.data.rol);
+      allow delete: if admin();
+    }
+
+    // Biblioteca de procedimientos, matrices y preguntas.
+    match /procedimientos/{id} {
+      allow read: if aprobado();
+      allow write: if editor();
+    }
+
+    // Nómina de personal (base del % de cobertura).
+    match /personal/{id} {
+      allow read, write: if aprobado();
+    }
+
+    // Registros de difusión y evaluación. Cada cuenta escribe solo los suyos.
+    // Una vez firmado, el registro no se edita ni se borra: solo su autor puede anularlo.
+    match /evaluaciones/{uid} {
+      allow read: if aprobado();
+      allow write: if aprobado() && propio(uid);
+
+      match /regs/{rid} {
+        allow read: if aprobado();
+        allow create: if aprobado() && propio(uid);
+        allow update: if aprobado() && propio(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['anulado', 'anuladoAt']);
+        allow delete: if false;
+      }
+      match /firmas/{rid} {
+        allow read: if aprobado();
+        allow create: if aprobado() && propio(uid);
+        allow update, delete: if false;
+      }
+    }
+
+    // Comentarios de mejora: los ve quien los envió y los editores; solo editores responden.
+    match /mejoras/{uid} {
+      allow read: if propio(uid) || editor();
+      allow write: if aprobado() && propio(uid);
+
+      match /items/{id} {
+        allow read: if propio(uid) || editor();
+        allow create: if aprobado() && propio(uid) && request.resource.data.estado == 'nueva';
+        allow update: if editor()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'respuesta', 'respondidoAt']);
+        allow delete: if false;
+      }
+    }
+  }
+}
