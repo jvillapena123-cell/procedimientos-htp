@@ -246,6 +246,7 @@ dialog ol{margin:0;padding-left:20px}
       <div class="brand-t"><b>Procedimientos operativos</b><span>Unidad Terminal Marítimo</span></div>
     </div>
     <nav class="tabs" aria-label="Secciones">
+      <a href="#miestado" data-r="miestado">Mi estado</a>
       <a href="#dashboard" data-r="dashboard">Dashboard</a>
       <a href="#procedimientos" data-r="procedimientos">Procedimientos</a>
       <a href="#evaluar" data-r="evaluar">Difundir y evaluar</a>
@@ -386,7 +387,7 @@ function procCounts(map,pid){const m=map[pid]||{};const v=Object.values(m);retur
 const views={};let cur=null;
 function route(){
   if(FB&&!document.body.classList.contains("authok"))return;
-  const h=(location.hash||"#dashboard").slice(1);
+  const h=(location.hash||(S.canEdit?"#dashboard":"#miestado")).slice(1);
   let name=h,arg=null;
   if(h.startsWith("p-")){name="detalle";arg=h.slice(2)}
   else if(h.startsWith("editar-")){name="editor";arg=h.slice(7)}
@@ -1475,6 +1476,62 @@ Object.assign(views.procedimientos,{
     $$("[data-fix]",box).forEach(b=>b.onclick=()=>{views.detalle._next="upg"});
   }
 });
+
+/* ---------- Mi estado: avance personal de cada usuario ---------- */
+const perfilRef=()=>FB?S.db.doc(`usuarios/${S.uid}`):S.db.doc(`data/users/${S.uid}/perfil`);
+views.miestado={
+  async mount(el){this.el=el;el.innerHTML='<div class="empty"><b>Cargando su estado…</b></div>';
+    if(!S.db){el.innerHTML='<div class="empty"><b>Inicie sesión para ver su estado.</b></div>';return}
+    if(this.rut===undefined){try{const s=await perfilRef().get();this.rut=(s.exists&&s.data().rut)||""}catch{this.rut=""}}
+    this.render()},
+  update(){if(this.rut!==undefined&&!$("#view input:focus"))this.render()},
+  async saveRut(v){
+    if(!rutOk(v)){toast("El RUT no es válido. Revise el dígito verificador.");return}
+    try{const r=perfilRef();if(FB)await r.update({rut:normRut(v)});else await r.set({rut:normRut(v),updatedAt:Date.now()});this.rut=normRut(v);toast("RUT vinculado");this.render()}
+    catch(e){toast(errMsg(e))}},
+  render(){
+    const el=this.el;const name=(S.me&&S.me.name)||"";
+    if(!this.rut){const sug=activos().find(x=>normH(x.nombre)===normH(name));
+      el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Mi estado</p><h1>Hola${name?", "+esc(name.split(" ")[0]):""}</h1><p class="lede">Vincule su RUT una vez para ver los instructivos que tiene difundidos, evaluados y pendientes.</p></div></section>
+      <section class="panel stack" style="max-width:520px"><label class="f">Su RUT<input type="text" id="mi-rut" placeholder="12.345.678-9" value="${sug?esc(fmtRut(sug.rut)):""}"></label>
+      ${sug?`<p class="hint">Lo encontramos en la nómina como ${esc(sug.nombre)} · ${esc(sug.cargo||"")}.</p>`:""}
+      <div class="row"><button class="btn primary" id="mi-save">Ver mi estado</button></div>
+      <p class="hint">Se usa solo para encontrar sus registros de difusión y evaluación, que se guardan por RUT.</p></section>`;
+      $("#mi-save",el).onclick=()=>this.saveRut($("#mi-rut").value.trim());$("#mi-rut",el).onkeydown=e=>{if(e.key==="Enter")this.saveRut(e.target.value.trim())};return}
+    const key=personKey(this.rut);const yo=activos().find(x=>(x.key||personKey(x.rut))===key);
+    const regs=allRegs().filter(r=>!r.anulado&&r.pkey===key);
+    const vig=vigentes();let total=0,hechos=0;
+    const rows=vig.map(p=>{const mine=regs.filter(r=>r.pid===p.id&&String(r.version)===String(p.version)).sort((a,b)=>b.fecha-a.fecha);
+      const hasIT=(p.secciones||[]).some(s=>String(s.texto).trim().length>20&&!/^\[completar/i.test(String(s.texto).trim()));const hasMX=(p.matriz||[]).length>0;
+      const nQP=(p.preguntasProc||[]).length,nQM=(p.preguntasMat||[]).length;
+      const find=f=>mine.find(f);
+      const items=[
+        {k:"pd",ap:hasIT,r:find(r=>r.procLeido),scope:"it",modo:"difusion",lbl:"IT difundida"},
+        {k:"pe",ap:hasIT&&nQP>0,r:find(r=>r.procOk),scope:"it",modo:"completa",lbl:"IT evaluada",last:find(r=>r.procNota!=null)},
+        {k:"md",ap:hasMX,r:find(r=>r.matLeida),scope:"miper",modo:"difusion",lbl:"MIPER difundida"},
+        {k:"me",ap:hasMX&&nQM>0,r:find(r=>r.matOk),scope:"miper",modo:"completa",lbl:"MIPER evaluada",last:find(r=>r.matNota!=null)}];
+      items.forEach(i=>{if(i.ap){total++;if(i.r)hechos++}});
+      const pend=items.filter(i=>i.ap&&!i.r);
+      const next=pend.find(i=>i.modo==="completa")||pend[0];
+      const cell=i=>!i.ap?'<span class="muted small">—</span>':i.r?`<span class="chip ok">✓ ${fmtDate(i.r.fecha)}</span>${i.k==="pe"?`<div class="small muted">${esc(i.r.procPuntaje||i.r.procNota+"%")}</div>`:i.k==="me"?`<div class="small muted">${esc(i.r.matPuntaje||i.r.matNota+"%")}</div>`:""}`
+        :i.last?`<span class="chip bad">Reprobada</span><div class="small muted">${esc((i.k==="pe"?i.last.procPuntaje:i.last.matPuntaje)||"")}</div>`:'<span class="chip warn">Pendiente</span>';
+      return{p,items,pend,next,mine,na:!items.some(i=>i.ap),html:`<tr><td><a href="#p-${esc(p.id)}"><b>${esc(p.titulo||p.codigo)}</b></a><div class="small muted code">${esc(p.codigo)} · v${esc(p.version)}</div></td>${items.map(i=>`<td>${cell(i)}</td>`).join("")}
+        <td><div class="row" style="flex-wrap:nowrap">${next?`<button class="btn sm primary" data-do="${esc(p.id)}|${pend.some(i=>i.scope==="it")&&pend.some(i=>i.scope==="miper")?"all":next.scope}|${pend.some(i=>i.modo==="completa")?"completa":"difusion"}">${pend.some(i=>i.modo==="completa")?"Evaluarme":"Leer y firmar"}</button>`:items.some(i=>i.ap)?'<span class="chip ok">Al día</span>':'<span class="chip">Sin documentos</span>'}${mine.length?`<button class="btn sm ghost" data-pdf="${esc(p.id)}">Mi registro PDF</button>`:""}</div></td></tr>`}});
+    const pendN=rows.filter(r=>r.pend.length).length;const conDocs=rows.filter(r=>!r.na).length;
+    el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Mi estado</p><h1>${esc(name||"Mi estado")}</h1><p class="lede">${esc(fmtRut(this.rut))}${yo?` · ${esc(yo.cargo||"")} · ${esc(yo.empresa||"")}`:""} · <a href="#miestado" id="mi-change">cambiar RUT</a></p></div></section>
+      <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="kpi"><span class="k-l">Avance</span><span class="k-v">${total?pct(hechos,total):0}%</span><span class="k-s">${hechos} de ${total} difusiones y evaluaciones</span><div class="bar"><span class="c-proc" style="width:${total?pct(hechos,total):0}%"></span></div></div>
+        <div class="kpi"><span class="k-l">Instructivos al día</span><span class="k-v">${conDocs-pendN}</span><span class="k-s">de ${conDocs} vigentes con documentos</span></div>
+        <div class="kpi"><span class="k-l">Con pendientes</span><span class="k-v" style="color:${pendN?"var(--warn)":"var(--ok)"}">${pendN}</span><span class="k-s">${pendN?"Complételos con el botón de cada fila":"Todo al día"}</span></div></div>
+      <section class="panel"><h2>Mis instructivos</h2>
+      ${rows.length?`<div class="tbl-wrap"><table><thead><tr><th>Instructivo</th><th>IT difundida</th><th>IT evaluada</th><th>MIPER difundida</th><th>MIPER evaluada</th><th></th></tr></thead><tbody>${rows.sort((a,b)=>b.pend.length-a.pend.length).map(r=>r.html).join("")}</tbody></table></div>`:'<div class="empty"><b>No hay instructivos vigentes.</b></div>'}
+      <p class="hint" style="margin-top:8px">“—” indica que ese documento aún no está cargado o no tiene evaluación. Solo cuenta la versión vigente de cada instructivo.</p></section>`;
+    $("#mi-change",el).onclick=e=>{e.preventDefault();this.rut="";this.render()};
+    $$("[data-do]",el).forEach(b=>b.onclick=()=>{const[id,scope,modo]=b.dataset.do.split("|");S.ev=newEv(id,scope,modo);
+      Object.assign(S.ev.w,{nombre:(yo&&yo.nombre)||name,rut:fmtRut(this.rut),cargo:(yo&&yo.cargo)||"",empresa:(yo&&yo.empresa)||"HTP",turno:(yo&&TURNOS.includes(yo.turno))?yo.turno:TURNOS[0],relator:""});location.hash="#evaluar"});
+    $$("[data-pdf]",el).forEach(b=>b.onclick=()=>{const p=procById(b.dataset.pdf);registroPDF(p,regs.filter(r=>r.pid===p.id))});
+  }
+};
 
 /* ---------- carga simple: subir Word o PDF → lista → buscar mejoras ---------- */
 async function readPdfText(file){
