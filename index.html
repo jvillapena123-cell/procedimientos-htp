@@ -536,7 +536,7 @@ views.detalle={
     if(!p){el.innerHTML=`<div class="empty"><b>${S.loaded?"Este instructivo no existe o fue eliminado.":"Cargando…"}</b><a href="#procedimientos">Volver a la biblioteca</a></div>`;return}
     const regs=allRegs().filter(r=>r.pid===p.id&&!r.anulado).sort((a,b)=>b.fecha-a.fecha);
     const nq=(p.preguntasProc||[]).length+(p.preguntasMat||[]).length;
-    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`],["rev","Buscar mejoras"]];
+    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`],["rev","Buscar mejoras"]];const needUp=!isHtpFormat(p)||!(p.matriz||[]).length||!(p.preguntasProc||[]).length;if(needUp&&S.canEdit)tabs.push(["upg","Actualizar al formato HTP"]);
     el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / ${esc(p.codigo||"")}</p><h1>${esc(p.titulo)}</h1>
       <p class="lede">Versión ${esc(p.version)} · ${esc(p.proceso||p.area||"")} · Aprobación ${esc(p.aprobacion||80)}% · ${p.estado==="borrador"?'<span class="chip warn">Borrador</span>':'<span class="chip ok">Vigente</span>'}</p></div>
       <div class="actions">${p.estado!=="borrador"?`<button class="btn primary" id="go-ev">Difundir y evaluar</button>`:""}${S.canEdit?`<a class="btn" href="#editar-${esc(p.id)}">Editar</a><button class="btn" id="dl-word">IT en Word</button><button class="btn" id="dl-eval" ${nq?"":"disabled"}>Evaluación en Word</button>`:""}<a class="btn ghost" href="#mejoras" id="go-mej">Sugerir mejora</a></div></section>
@@ -548,7 +548,9 @@ views.detalle={
     $("#dl-eval",el)&&($("#dl-eval",el).onclick=()=>downloadEvalWord(p));
     $("#go-mej",el).onclick=()=>{S.mejPid=p.id};
     const c=$("#tabc",el);
-    if(this.tab==="doc")c.innerHTML=`<div class="panel">${docBodyHTML(p)}</div>`;
+    if(this.tab==="doc")c.innerHTML=(needUp&&S.canEdit?`<div class="ai row" style="margin-bottom:12px"><span class="sp small"><b>Este instructivo no está completo en el formato HTP</b> (${[!isHtpFormat(p)&&"secciones",!(p.matriz||[]).length&&"MIPER",!(p.preguntasProc||[]).length&&"evaluación"].filter(Boolean).join(", ")}).</span><button class="btn sm orange" id="go-upg">Actualizar al formato HTP</button></div>`:"")+`<div class="panel">${docBodyHTML(p)}</div>`;
+    $("#go-upg",c)&&($("#go-upg",c).onclick=()=>{this.tab="upg";this.render(el)});
+    if(this.tab==="upg"){c.innerHTML='<div class="panel" id="upg-box"></div>';showUpgrade(p,$("#upg-box",c));return}
     if(this.tab==="rev"){c.innerHTML='<div class="panel" id="rev-box"></div>';showRevision(p,$("#rev-box",c));return}
     if(this.tab==="mat")c.innerHTML=`<div class="panel">${matrixHTML(p.matriz,p)}</div>`;
     if(this.tab==="preg")c.innerHTML=`<div class="panel stack"><h3>Evaluación del instructivo</h3>${qsHTML(p.preguntasProc,S.canEdit)}<h3>Evaluación de la MIPER</h3>${qsHTML(p.preguntasMat,S.canEdit)}${S.canEdit?"":'<p class="hint">La pauta de corrección solo la ven los editores.</p>'}</div>`;
@@ -712,7 +714,7 @@ ${d.matriz.map((r,i)=>`${i+1}. Etapa: ${r.etapa} | Peligro: ${r.peligro} | Riesg
       proceso:str(d.proceso),subproceso:str(d.subproceso),actividad:str(d.actividad),sistemas:str(d.sistemas),tarea:str(d.tarea),tipoTarea:str(d.tipoTarea),lugares:str(d.lugares),firmasDoc:withFirmas(d),
       secciones:d.secciones.filter(s=>s.titulo||s.texto),matriz:d.matriz.map(r=>({...normRow(r),p:pcOpt(r.p),c:pcOpt(r.c),pr:pcOpt(r.pr),cr:pcOpt(r.cr)})),
       preguntasProc:d.preguntasProc.map(compactQ),preguntasMat:d.preguntasMat.map(compactQ),
-      docAssetId:d.docAssetId||null,docNombre:d.docNombre||null,docUrl:d.docUrl||null,updatedAt:Date.now(),updatedBy:S.uid,createdAt:d.createdAt||Date.now()};
+      docAssetId:d.docAssetId||null,docNombre:d.docNombre||null,docUrl:d.docUrl||null,textoOriginal:d.textoOriginal||null,updatedAt:Date.now(),updatedBy:S.uid,createdAt:d.createdAt||Date.now()};
     try{await S.db.doc(`procedimientos/${id}`).set(doc);S.draft=null;toast(doc.estado==="borrador"?"Borrador guardado":"Instructivo publicado como vigente");location.hash="#p-"+id}
     catch(e){toast(errMsg(e));b.disabled=false}
   }
@@ -1280,6 +1282,83 @@ ${w.texto.slice(0,70000)}`;
   }
 };
 
+/* ---------- actualizar al formato HTP ---------- */
+const SEC_MAP=[[1,/objetiv|proposito/],[2,/alcance|ambito|aplicacion/],[3,/referenc|normativ|documentos|legislac|marco legal/],[4,/definic|glosario|terminolog|abreviat/],[5,/responsab|funciones/],[6,/recurso|equipo|herramient|epp|proteccion personal|competenc|materiales|requisito|capacitac/],[7,/riesgo|peligro|precauci|medidas de seguridad|seguridad/],[8,/desarrollo|descripcion|procedimiento|metodolog|actividad|secuencia|pasos|instruccion|operacion|ejecucion|etapas/],[9,/desviac|no conform|emergenc|contingenc|incidente/],[10,/registro/],[11,/seguimiento|medicion|indicador|verificac|inspeccion/],[12,/anexo|apendice|formulario/],[13,/cambio|historial|control de version|modificac/]];
+const deacc=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function isHtpFormat(p){const secs=p.secciones||[];let hits=0;IT_SECS.forEach(t=>{const n=t.split(".")[0];const kw=deacc(t.split(". ")[1]).split(" ")[0];if(secs.some(s=>{const x=deacc(s.titulo).trim();return x.startsWith(n+".")&&x.includes(kw)}))hits++});return hits>=10}
+function genericSectionsFromBox(box){
+  const secs=[];let cur=null;const head=el=>{const t=(el.textContent||"").trim();if(!t||t.length>80)return false;if(/^H[1-4]$/.test(el.tagName))return true;
+    if(el.tagName!=="P")return false;const strong=el.querySelector("strong");const allBold=strong&&strong.textContent.trim()===t;const caps=/[A-ZÁÉÍÓÚÑ]{4}/.test(t)&&t===t.toUpperCase();
+    return (allBold||caps)&&(/^\d+(\.\d+)*\.?\s+\S/.test(t)||caps)};
+  for(const el of [...box.children]){const t=(el.textContent||"").trim();
+    if(head(el)&&!/^\d+\.\d+/.test(t)){cur={titulo:t.replace(/\s+/g," "),lines:[]};secs.push(cur);continue}
+    if(!cur)continue;
+    if(/^H[2-6]$/.test(el.tagName)||head(el)){cur.lines.push(t);continue}
+    if(el.tagName==="UL"||el.tagName==="OL"){[...el.querySelectorAll("li")].forEach(li=>cur.lines.push("- "+li.textContent.trim()));continue}
+    if(el.tagName==="TABLE"){tblRows(el).forEach(r=>{if(r.some(Boolean))cur.lines.push(r.map(c=>c.replace(/\n/g," / ").replace(/\|/g,"/")).join(" | "))});cur.lines.push("");continue}
+    if(t)cur.lines.push(t)}
+  return secs.map(s=>({titulo:s.titulo,texto:s.lines.join("\n").replace(/\n{3,}/g,"\n\n").trim()})).filter(s=>s.texto.length>0);
+}
+function genericSectionsFromText(txt){
+  const secs=[];let cur=null;
+  txt.split("\n").map(l=>l.trim()).filter(Boolean).forEach(l=>{const isH=l.length<80&&((/^\d{1,2}\.?\s+[A-ZÁÉÍÓÚÑ]/.test(l)&&!/^\d+\.\d/.test(l))||(/[A-ZÁÉÍÓÚÑ]{4}/.test(l)&&l===l.toUpperCase()&&!/\d{2,}/.test(l)));
+    if(isH){cur={titulo:l,lines:[]};secs.push(cur)}else if(cur)cur.lines.push(l)});
+  return secs.map(s=>({titulo:s.titulo,texto:s.lines.join("\n").trim()})).filter(s=>s.texto.length>0);
+}
+function mapToHtp(secs){
+  const out=IT_SECS.map(t=>({titulo:t,texto:"",de:[]}));
+  (secs||[]).forEach(s=>{const t=deacc(s.titulo).replace(/^\d+(\.\d+)*\.?\s*/,"");const hit=SEC_MAP.find(([,re])=>re.test(t));const i=hit?hit[0]-1:7;const o=out[i];
+    const block=(o.texto||!hit?s.titulo.replace(/^\d+(\.\d+)*\.?\s*/,"")+"\n":"")+s.texto;o.texto=(o.texto?o.texto+"\n\n":"")+block;o.de.push(s.titulo)});
+  return out;
+}
+function upgradeSummary(map){return map.map(s=>({titulo:s.titulo,de:s.de,vacia:!String(s.texto).trim()}))}
+function showUpgrade(p,box,opts={}){
+  const d=Object.assign(blankProc(),clone(p));d.firmasDoc=withFirmas(d);d.matriz=(d.matriz||[]).map(normRow);
+  const orig=(p._orig&&p._orig.length?p._orig:p.secciones)||[];
+  let map=isHtpFormat(p)?(p.secciones||[]).map(s=>({...s,de:[s.titulo]})):mapToHtp(orig);
+  d.secciones=map.map(s=>({titulo:s.titulo,texto:String(s.texto).trim()||"[completar]"}));
+  const paint=(msg="")=>{const sum=upgradeSummary(map);const vac=sum.filter(s=>s.vacia).length;
+    box.innerHTML=`<div class="stack"><div class="row"><h3 class="sp">Actualizar al formato HTP · ${esc(d.codigo||d.titulo||"")}</h3></div>
+    ${msg?`<p class="small" style="color:var(--ok)">${esc(msg)}</p>`:""}
+    <div class="sum"><div><span>Secciones del formato</span><b>${13-vac} de 13 con contenido</b></div><div><span>MIPER</span><b>${d.matriz.length?d.matriz.length+" filas":"No tiene"}</b></div><div><span>Evaluación</span><b>${(d.preguntasProc||[]).length?(d.preguntasProc||[]).length+" afirmaciones":"No tiene"}</b></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Sección HTP</th><th>Contenido tomado de</th></tr></thead><tbody>${sum.map(s=>`<tr><td>${esc(s.titulo)}</td><td>${s.vacia?'<span class="chip warn">Sin contenido · queda “[completar]”</span>':esc(s.de.join(" · ")||"—")}</td></tr>`).join("")}</tbody></table></div>
+    <div class="row"><button class="btn orange" id="up-ai" ${S.sample?"":"disabled"}>${!d.matriz.length||!(d.preguntasProc||[]).length?"Generar MIPER y evaluación con IA":"Mejorar redacción con IA"}</button>
+      ${p.textoOriginal?`<button class="btn" id="up-ai2" ${S.sample?"":"disabled"}>Reorganizar todo con IA</button>`:""}
+      <button class="btn primary" id="up-open">Abrir en el editor</button><button class="btn" id="up-word">IT en Word (formato HTP)</button>${(d.preguntasProc||[]).length?'<button class="btn" id="up-eval">Evaluación en Word</button>':""}</div>
+    <p class="hint">Se conserva el texto original: solo se reordena en las secciones del formato. Revise en el editor y complete lo marcado “[completar]” antes de publicar.</p></div>`;
+    $("#up-open",box).onclick=()=>{S.draft=Object.assign(clone(d),p.id?{id:p.id}:{});delete S.draft._orig;opts.onOpen&&opts.onOpen();location.hash=p.id?"#editar-"+p.id:"#nuevo"};
+    $("#up-word",box).onclick=()=>downloadWord(d);
+    $("#up-eval",box)&&($("#up-eval",box).onclick=()=>downloadEvalWord(d));
+    const runAI=async(btn,full)=>{btn.disabled=true;btn.innerHTML='<span class="spin"></span> Trabajando…';
+      const needM=!d.matriz.length,needQ=!(d.preguntasProc||[]).length;
+      const src=full?String(p.textoOriginal).slice(0,70000):d.secciones.map(s=>s.titulo+"\n"+s.texto).join("\n\n").slice(0,45000);
+      const prompt=`${full?"Convierte al formato estándar este instructivo existente":"Completa este instructivo, ya ordenado en el formato estándar,"} de ${HTP_CTX}
+CONSERVA el contenido y la redacción original; solo ${full?"ordénalo en las 13 secciones":"agrega lo que falta"}. No inventes cifras, equipos ni responsables que no estén en el texto; donde falte un dato escribe "[completar: ...]".
+${needM?"Construye la MIPER a partir de los pasos y riesgos del instructivo (una fila por etapa o peligro relevante).":"Deja \"matriz\" vacía: ya existe."}
+${needQ?"Crea la evaluación: 10 afirmaciones V/F del instructivo y 5 de la MIPER, con justificación.":"Deja \"preguntasProc\" y \"preguntasMat\" vacías: ya existen."}
+Completa también proceso, subproceso y actividad si se pueden deducir del texto.
+
+${AI_RULES}
+
+Devuelve SOLO JSON con esta forma:
+${AI_SHAPE}
+
+CÓDIGO: ${d.codigo||"(tomar del texto)"} · TÍTULO: ${d.titulo||"(tomar del texto)"}
+TEXTO:
+${src}`;
+      try{const r=await S.sample.json(prompt,{modelTier:"complex"});const ai=draftFromAI(r,{codigo:d.codigo,titulo:d.titulo,area:d.area});
+        ["proceso","subproceso","actividad","tarea","tipoTarea","lugares"].forEach(k=>{if(!d[k]&&ai[k])d[k]=ai[k]});if(!d.titulo&&ai.titulo)d.titulo=ai.titulo;
+        if(full&&ai.secciones.some(s=>s.texto)){d.secciones=ai.secciones;map=ai.secciones.map(s=>({...s,de:["IA (texto original)"]}))}
+        else if(!full){const fill=ai.secciones||[];map=map.map((s,i)=>{if(String(s.texto).trim())return s;const f=fill.find(x=>deacc(x.titulo).startsWith(String(i+1)+"."));return f&&f.texto&&!/^\[completar/i.test(f.texto)?{...s,texto:f.texto,de:["IA"]}:s});d.secciones=map.map(s=>({titulo:s.titulo,texto:String(s.texto).trim()||"[completar]"}))}
+        if(needM&&ai.matriz.length)d.matriz=ai.matriz.map(normRow);if(needQ){d.preguntasProc=ai.preguntasProc;d.preguntasMat=ai.preguntasMat}
+        paint(`Listo: ${needM?ai.matriz.length+" filas de MIPER, ":""}${needQ?ai.preguntasProc.length+" afirmaciones, ":""}revise antes de publicar.`)}
+      catch(e){btn.disabled=false;btn.textContent="Reintentar con IA";toast(e.code==="cancelled"?"Cancelado.":e.code==="not_granted"?"No se autorizó el uso de IA.":errMsg(e))}};
+    $("#up-ai",box).onclick=e=>runAI(e.currentTarget,false);
+    $("#up-ai2",box)&&($("#up-ai2",box).onclick=e=>runAI(e.currentTarget,true));
+  };
+  paint();
+}
+
 /* ---------- carga simple: subir Word o PDF → lista → buscar mejoras ---------- */
 async function readPdfText(file){
   if(!window.pdfjsLib)throw{message:"No se pudo cargar el lector de PDF. Recargue la página."};
@@ -1309,11 +1388,15 @@ async function analyzeFile(f){
   const isPdf=/\.pdf$/i.test(f.name)||f.type==="application/pdf";
   try{
     if(isPdf){r.text=await readPdfText(f);r.kind=classifyText(r.text);r.pdf=true;
-      if(r.kind==="it"){const d=itFromPdfText(r.text);r.partial=d;r.code=d.codigo||"";r.ok=d.secciones.length>=3;r.msg=r.ok?`${d.secciones.length} secciones`:"no se reconocieron las secciones"}
+      if(r.kind==="it"){let d=itFromPdfText(r.text);if(d.secciones.length<8){const g=genericSectionsFromText(r.text);d={codigo:d.codigo,titulo:d.titulo||f.name.replace(/\.pdf$/i,"").replace(CODE_RE,"").replace(/[_-]+/g," ").trim(),secciones:g,_orig:g};r.formato="distinto"}
+        r.partial=d;r.code=d.codigo||"";r.ok=d.secciones.length>0;r.msg=r.formato?`formato distinto · ${d.secciones.length} apartados`:`${d.secciones.length} secciones`}
       else{r.code=(r.text.match(CODE_RE)||[""])[0];r.ok=false;r.msg="PDF: las tablas requieren ordenar con IA"}}
     else{if(!window.mammoth)throw{message:"No se pudo cargar el lector de Word. Recargue la página."};
       const box=await readDocxHtml(f);r.text=box.textContent;r.kind=classifyDocx(box);
-      if(r.kind==="it"){const d=parseItDocx(box);r.partial=d;r.code=d.codigo||"";r.ok=d.secciones.length>0;r.msg=`${d.secciones.length} secciones`}
+      if(r.kind==="it"){let d=parseItDocx(box);if(d.secciones.length<8){const g=genericSectionsFromBox(box);const code=d.codigo||(box.textContent.match(CODE_RE)||[""])[0];
+          const firstP=[...box.children].map(e=>(e.textContent||"").trim()).find(t=>t.length>8&&t.length<120&&!CODE_RE.test(t)&&!/^(contenido|indice|índice)$/i.test(t));
+          d={...d,codigo:code,titulo:d.titulo||firstP||f.name.replace(/\.docx$/i,"").replace(CODE_RE,"").replace(/[_-]+/g," ").trim(),secciones:g,_orig:g};r.formato="distinto"}
+        r.partial=d;r.code=d.codigo||"";r.ok=d.secciones.length>0;r.msg=r.formato?`formato distinto · ${d.secciones.length} apartados`:`${d.secciones.length} secciones`}
       else if(r.kind==="miper"){const d=parseMiperDocx(box);r.partial=d;r.code=d.codigo||"";r.ok=d.matriz.length>0;r.msg=`${d.matriz.length} filas`}
       else{const d=parseEvalDocx(box);r.partial=d;r.ok=d.preguntasProc.length>0;r.msg=`${d.preguntasProc.length} afirmaciones${d.sinPauta?", sin pauta":""}`}
       if(!r.code)r.code=(r.text.match(CODE_RE)||[""])[0]}
@@ -1322,7 +1405,7 @@ async function analyzeFile(f){
   return r;
 }
 function mergePartial(d,r){const p=r.partial||{};
-  if(r.kind==="it"){["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.firmasDoc)d.firmasDoc=p.firmasDoc;if(p.secciones&&p.secciones.length)d.secciones=p.secciones}
+  if(r.kind==="it"){["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.firmasDoc)d.firmasDoc=p.firmasDoc;if(p.secciones&&p.secciones.length)d.secciones=p.secciones;if(p._orig){d._orig=p._orig;d.textoOriginal=String(r.text||"").slice(0,150000)}}
   if(r.kind==="miper"){["tarea","tipoTarea","lugares"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.matriz&&p.matriz.length)d.matriz=p.matriz.map(normRow)}
   if(r.kind==="eval"){if(p.preguntasProc&&p.preguntasProc.length)d.preguntasProc=p.preguntasProc;if(p.aprobacion)d.aprobacion=p.aprobacion}
 }
@@ -1331,7 +1414,7 @@ function procDocFromDraft(d,base){const str=v=>String(v??"").trim();const b=base
     proceso:str(d.proceso),subproceso:str(d.subproceso),actividad:str(d.actividad),sistemas:str(d.sistemas),tarea:str(d.tarea),tipoTarea:str(d.tipoTarea),lugares:str(d.lugares),firmasDoc:withFirmas(d),
     secciones:(d.secciones||[]).filter(s=>s.titulo||s.texto),matriz:(d.matriz||[]).map(r=>({...normRow(r),p:pcOpt(r.p),c:pcOpt(r.c),pr:pcOpt(r.pr),cr:pcOpt(r.cr)})),
     preguntasProc:(d.preguntasProc||[]).map(compactQ),preguntasMat:(d.preguntasMat||[]).map(compactQ),
-    docAssetId:d.docAssetId||b.docAssetId||null,docNombre:d.docNombre||b.docNombre||null,docUrl:d.docUrl||b.docUrl||null,createdAt:b.createdAt||Date.now(),updatedAt:Date.now(),updatedBy:S.uid};
+    docAssetId:d.docAssetId||b.docAssetId||null,docNombre:d.docNombre||b.docNombre||null,docUrl:d.docUrl||b.docUrl||null,textoOriginal:d.textoOriginal||b.textoOriginal||null,createdAt:b.createdAt||Date.now(),updatedAt:Date.now(),updatedBy:S.uid};
 }
 /* revisión: chequeos automáticos + análisis con IA */
 function quickChecks(p){
@@ -1435,9 +1518,10 @@ Object.assign(views.cargar,{
     const box=$("#glist");const G=Object.values(this.groups);
     if(!G.length){box.innerHTML='<div class="empty"><b>Aún no ha subido archivos.</b>Cuando suba el Word o PDF, aquí aparecerá cada instructivo con lo que se reconoció.</div>';return}
     const chip=(g,k)=>{const fs=g.files.filter(f=>f.kind===k);if(!fs.length)return'<span class="chip">—</span>';const f=fs[fs.length-1];return`<span class="chip ${f.ok?"ok":f.error?"bad":"warn"}" title="${esc(f.name)}">${f.ok?"✓ ":""}${esc(f.msg)}</span>`};
-    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Código</th><th>Título</th><th>Instructivo</th><th>MIPER</th><th>Evaluación</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Código</th><th>Título</th><th>Instructivo</th><th>MIPER</th><th>Evaluación</th><th>Formato</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
     ${G.map(g=>{const d=g.draft;const needAI=g.files.some(f=>!f.ok&&!f.error);return`<tr><td class="code">${esc(d.codigo||g.code)}${g.base?'<div><span class="chip">ya existe</span></div>':'<div><span class="chip info">nuevo</span></div>'}</td><td>${esc(d.titulo||"(sin título)")}<div class="small muted">${esc(g.files.map(f=>f.name).join(" · "))}</div></td>
       <td>${chip(g,"it")}</td><td>${chip(g,"miper")}</td><td>${chip(g,"eval")}</td>
+      <td>${isHtpFormat(d)&&d.matriz.length&&(d.preguntasProc||[]).length?'<span class="chip ok">✓ Formato HTP</span>':`<button class="btn sm orange" data-up="${esc(g.code)}">Actualizar al formato HTP</button>`}</td>
       <td><select data-est="${esc(g.code)}" style="width:auto"><option value="vigente"${d.estado!=="borrador"?" selected":""}>Vigente</option><option value="borrador"${d.estado==="borrador"?" selected":""}>Borrador</option></select></td>
       <td><div class="row" style="flex-wrap:nowrap">${needAI?`<button class="btn sm orange" data-ai="${esc(g.code)}">Ordenar con IA</button>`:""}<button class="btn sm" data-rev="${esc(g.code)}">Buscar mejoras</button><button class="btn sm" data-ed="${esc(g.code)}">Revisar</button><button class="btn sm ghost" data-rm="${esc(g.code)}">Quitar</button></div></td></tr>`}).join("")}
     </tbody></table></div>
@@ -1447,6 +1531,7 @@ Object.assign(views.cargar,{
     $$("[data-ed]",box).forEach(b=>b.onclick=()=>{const g=this.groups[b.dataset.ed];S.draft=Object.assign(clone(g.draft),g.base?{id:g.base.id}:{});delete this.groups[b.dataset.ed];location.hash=g.base?"#editar-"+g.base.id:"#nuevo"});
     $$("[data-rev]",box).forEach(b=>b.onclick=()=>{const g=this.groups[b.dataset.rev];const rv=$("#rev");rv.className="panel";showRevision(Object.assign({},g.draft,g.base?{id:g.base.id}:{}),rv);rv.scrollIntoView({behavior:"smooth",block:"start"})});
     $$("[data-ai]",box).forEach(b=>b.onclick=()=>this.aiGroup(b.dataset.ai,b));
+    $$("[data-up]",box).forEach(b=>b.onclick=()=>{const code=b.dataset.up;const g=this.groups[code];const rv=$("#rev");rv.className="panel";showUpgrade(Object.assign({},g.draft,g.base?{id:g.base.id}:{}),rv,{onOpen:()=>{delete this.groups[code]}});rv.scrollIntoView({behavior:"smooth",block:"start"})});
     $("#save-all",box).onclick=e=>this.saveAll(e.currentTarget);
   },
   async aiGroup(code,btn){
