@@ -547,10 +547,10 @@ views.detalle={
     if(!p){el.innerHTML=`<div class="empty"><b>${S.loaded?"Este instructivo no existe o fue eliminado.":"Cargando…"}</b><a href="#procedimientos">Volver a la biblioteca</a></div>`;return}
     const regs=allRegs().filter(r=>r.pid===p.id&&!r.anulado).sort((a,b)=>b.fecha-a.fecha);
     const nq=(p.preguntasProc||[]).length+(p.preguntasMat||[]).length;
-    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`],["rev","Buscar mejoras"]];const needUp=!isHtpFormat(p)||!(p.matriz||[]).length||!(p.preguntasProc||[]).length;if(needUp&&S.canEdit)tabs.push(["upg","Actualizar al formato HTP"]);if(S.canEdit)tabs.push(["ia","Mejorar con IA"]);
+    const tabs=[["doc","Instructivo"],["mat",`MIPER (${(p.matriz||[]).length})`],["preg",`Evaluación (${nq})`],["reg",`Registros (${regs.length})`],["rev","Buscar mejoras"]];const needUp=!isHtpFormat(p)||!(p.matriz||[]).length||!(p.preguntasProc||[]).length;if(needUp&&S.canEdit)tabs.push(["upg","Actualizar al formato HTP"]);if(S.canEdit)tabs.push(["ia",FB?"Mejorar en Claude":"Mejorar con IA"]);
     el.innerHTML=`<section class="pagehead"><div><p class="eyebrow"><a href="#procedimientos" style="color:inherit">Procedimientos</a> / ${esc(p.codigo||"")}</p><h1>${esc(p.titulo)}</h1>
       <p class="lede">Versión ${esc(p.version)} · ${esc(p.proceso||p.area||"")} · Aprobación ${esc(p.aprobacion||80)}% · ${p.estado==="borrador"?'<span class="chip warn">Borrador</span>':'<span class="chip ok">Vigente</span>'}</p></div>
-      <div class="actions">${p.estado!=="borrador"?`<button class="btn primary" id="go-ev">Difundir y evaluar</button>`:""}${S.canEdit?`<button class="btn orange" id="go-ia">Mejorar con IA</button><a class="btn" href="#editar-${esc(p.id)}">Editar</a><button class="btn" id="dl-word">IT en Word</button><button class="btn" id="dl-eval" ${nq?"":"disabled"}>Evaluación en Word</button>`:""}<a class="btn ghost" href="#mejoras" id="go-mej">Sugerir mejora</a></div></section>
+      <div class="actions">${p.estado!=="borrador"?`<button class="btn primary" id="go-ev">Difundir y evaluar</button>`:""}${S.canEdit?`<button class="btn orange" id="go-ia">${FB?"Mejorar en Claude":"Mejorar con IA"}</button><a class="btn" href="#editar-${esc(p.id)}">Editar</a><button class="btn" id="dl-word">IT en Word</button><button class="btn" id="dl-eval" ${nq?"":"disabled"}>Evaluación en Word</button>`:""}<a class="btn ghost" href="#mejoras" id="go-mej">Sugerir mejora</a></div></section>
       <div class="subtabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-t="${k}" aria-selected="${this.tab===k}">${l}</button>`).join("")}</div>
       <div id="tabc"></div>`;
     $$(".subtabs button",el).forEach(b=>b.onclick=()=>{this.tab=b.dataset.t;this.render(el)});
@@ -561,7 +561,7 @@ views.detalle={
     const c=$("#tabc",el);
     if(this.tab==="doc")c.innerHTML=(needUp&&S.canEdit?`<div class="ai row" style="margin-bottom:12px"><span class="sp small"><b>Este instructivo no está completo en el formato HTP</b> (${[!isHtpFormat(p)&&"secciones",!(p.matriz||[]).length&&"MIPER",!(p.preguntasProc||[]).length&&"evaluación"].filter(Boolean).join(", ")}).</span><button class="btn sm orange" id="go-upg">Actualizar al formato HTP</button></div>`:"")+`<div class="panel">${docBodyHTML(p)}</div>`;
     $("#go-upg",c)&&($("#go-upg",c).onclick=()=>{this.tab="upg";this.render(el)});
-    if(this.tab==="ia"){c.innerHTML='<div class="panel" id="ia-box"></div>';showMejorarIA(p,$("#ia-box",c));return}
+    if(this.tab==="ia"){c.innerHTML='<div class="panel" id="ia-box"></div>';if(FB)showMejorarEnClaude(p,$("#ia-box",c));else showMejorarIA(p,$("#ia-box",c));return}
     if(this.tab==="upg"){c.innerHTML='<div class="panel" id="upg-box"></div>';showUpgrade(p,$("#upg-box",c));return}
     if(this.tab==="rev"){c.innerHTML='<div class="panel" id="rev-box"></div>';showRevision(p,$("#rev-box",c));return}
     if(this.tab==="mat")c.innerHTML=`<div class="panel">${matrixHTML(p.matriz,p)}</div>`;
@@ -990,9 +990,10 @@ views.personal={
 async function readDocxHtml(file){const r=await window.mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});const box=document.createElement("div");box.innerHTML=r.value;return box}
 function cellText(td){const ps=[...td.querySelectorAll("p,li")].filter(p=>!p.querySelector("p"));const t=ps.length?ps.map(p=>p.textContent.trim()).filter(Boolean).join("\n"):td.textContent.trim();return t.replace(/[ \t ]+/g," ").trim()}
 function tblRows(t){return [...t.rows].filter(tr=>tr.closest("table")===t).map(tr=>[...tr.cells].map(cellText))}
-const topTables=box=>[...box.children].filter(e=>e.tagName==="TABLE");
+const topTables=box=>[...(box.children||[])].filter(e=>e.tagName==="TABLE");
 const CODE_RE=/\b[A-Z]{2,4}-\d{2,3}-\d{2,4}\b/;
 function classifyDocx(box){const txt=box.textContent;
+  if([...box.querySelectorAll("h1,h2")].filter(h=>/^\d{1,2}\.\s+\S/.test(h.textContent.trim())).length>=8)return"it";
   if(/peligro/i.test(txt)&&/(evaluaci[óo]n residual|VEP)/i.test(txt))return"miper";
   if(/afirmaci[óo]n/i.test(txt)&&/(pauta de correcci[óo]n|verdadera|\(V\))/i.test(txt))return"eval";
   return"it";}
@@ -1005,13 +1006,17 @@ function parseIdRows(rows,d){
       [["elaboro","elabor"],["reviso","revis"],["aprobo","aprob"]].forEach(([k,p])=>{const j=head.findIndex(x=>x.startsWith(p));let v=j>=0?(r[j]||"").trim():"";if(/^\[.*\]$/.test(v))v="";if(v)fd[k][key]=v})});
     d.firmasDoc=fd;}
 }
+function isMiperTable(t){const rows=tblRows(t);return rows.length>1&&rows.slice(0,3).some(r=>r.some(c=>/peligro/i.test(c)))&&rows.slice(0,3).some(r=>r.some(c=>/residual/i.test(c)))}
 function parseItDocx(box){
   const d={secciones:[]};const kids=[...box.children];let cur=null;const secRe=/^\d{1,2}\.\s+\S/;
   for(const el of kids){
     const t=(el.textContent||"").trim();
     if(!cur&&el.tagName!=="TABLE"&&t&&!/^H1$/.test(el.tagName)){if(!d.codigo&&CODE_RE.test(t)&&t.length<20){d.codigo=t.match(CODE_RE)[0];continue}if(!d.titulo&&d.codigo&&t.length>5&&!secRe.test(t)&&!/^contenido$/i.test(t))d.titulo=t;continue}
     if(/^H[12]$/.test(el.tagName)&&secRe.test(t)&&!/^\d+\.\d/.test(t)){cur={titulo:t,lines:[]};d.secciones.push(cur);continue}
-    if(!cur){if(el.tagName==="TABLE")parseIdRows(tblRows(el),d);continue}
+    if(el.tagName==="TABLE"&&isMiperTable(el)){const m=parseMiperDocx({children:[el],textContent:el.textContent});d.matriz=(d.matriz||[]).concat(m.matriz);continue}
+    if(el.tagName==="TABLE"&&/^(tarea|metodolog|lugares)/i.test(normH((tblRows(el)[0]||[])[0]||""))){const m=parseMiperDocx({children:[el],textContent:""});["tarea","tipoTarea","lugares"].forEach(k=>{if(m[k])d[k]=m[k]});continue}
+    if(!cur){if(el.tagName==="TABLE"){const rows=tblRows(el);rows.forEach(r=>r.forEach(c=>{if(!d.codigo&&CODE_RE.test(c)&&c.length<30)d.codigo=c.match(CODE_RE)[0];const ls=c.split("\n");if(!d.titulo&&ls.length>=2&&/^(instructivo|procedimiento) de trabajo$/i.test(ls[0].trim()))d.titulo=ls.slice(1).join(" ").trim()}));parseIdRows(rows,d)}continue}
+    if(/^anexo\s+\d+\.\s*matriz/i.test(t)||/^MIPER\s*·/i.test(t))continue;
     if(/^H[2-6]$/.test(el.tagName)){if(t)cur.lines.push(t);continue}
     if(el.tagName==="UL"||el.tagName==="OL"){[...el.querySelectorAll("li")].forEach(li=>cur.lines.push("- "+li.textContent.trim()));continue}
     if(el.tagName==="TABLE"){const rows=tblRows(el);
@@ -1031,7 +1036,7 @@ function parseMiperDocx(box){
       else if(k.startsWith("instrucciondetrabajo")&&CODE_RE.test(v))d.codigo=v.match(CODE_RE)[0]}});
     if(!(rows.some(r=>r.some(c=>/peligro/i.test(c)))&&rows.some(r=>r.some(c=>/residual/i.test(c)))))return;
     rows.forEach(r=>{if(!/^\d+$/.test(r[0]||""))return;
-      if(r.length>=14)d.matriz.push({etapa:r[1],puestos:r[2],peligro:r[3],riesgo:r[4],dano:r[5],p:pcOpt(r[6]),c:pcOpt(r[7]),evalIni:"",control:r[9],pr:pcOpt(r[10]),cr:pcOpt(r[11]),evalRes:"",responsable:r[13]});
+      if(r.length>=14){const p=pcOpt(r[6]),pr=pcOpt(r[10]);d.matriz.push({etapa:r[1],puestos:r[2],peligro:r[3],riesgo:r[4],dano:r[5],p,c:p==null?null:pcOpt(r[7]),evalIni:p==null&&!/^[—-]?$/.test(r[8]||"")?r[8]:"",control:r[9],pr,cr:pr==null?null:pcOpt(r[11]),evalRes:pr==null&&!/^[—-]?$/.test(r[12]||"")?r[12]:"",responsable:r[13]})}
       else if(r.length>=10)d.matriz.push({etapa:r[1],puestos:r[2],peligro:r[3],riesgo:r[4],dano:r[5],p:null,c:null,evalIni:r[6],control:r[7],pr:null,cr:null,evalRes:r[8],responsable:r[9]});
     });
   });
@@ -1050,7 +1055,7 @@ async function importHtpWord(files,d){
   const log=[];
   for(const f of files){let box;try{box=await readDocxHtml(f)}catch{log.push(`${f.name}: no se pudo leer (debe ser .docx, no .doc antiguo)`);continue}
     const k=classifyDocx(box);
-    if(k==="it"){const r=parseItDocx(box);["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior"].forEach(x=>{if(r[x])d[x]=r[x]});if(r.firmasDoc)d.firmasDoc=r.firmasDoc;if(r.secciones.length)d.secciones=r.secciones;
+    if(k==="it"){const r=parseItDocx(box);["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior","tarea","tipoTarea","lugares"].forEach(x=>{if(r[x])d[x]=r[x]});if(r.matriz&&r.matriz.length)d.matriz=r.matriz;if(r.firmasDoc)d.firmasDoc=r.firmasDoc;if(r.secciones.length)d.secciones=r.secciones;
       log.push(`${f.name}: instructivo con ${r.secciones.length} secciones`)}
     else if(k==="miper"){const r=parseMiperDocx(box);["tarea","tipoTarea","lugares"].forEach(x=>{if(r[x])d[x]=r[x]});if(!d.codigo&&r.codigo)d.codigo=r.codigo;if(r.matriz.length)d.matriz=r.matriz;
       log.push(`${f.name}: MIPER con ${r.matriz.length} filas`)}
@@ -1437,17 +1442,31 @@ ${(base.preguntasProc||[]).map((q,i)=>`${i+1}. ${q.q} → ${q.tipo==="vf"?(q.ok?
       <tr><td><label class="row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" data-acc="miper" ${acc.miper?"checked":""} ${prop.matriz.length?"":"disabled"}><b class="small">MIPER</b></label></td><td class="small muted">${base.matriz.length} filas</td><td class="small">${prop.matriz.length} filas propuestas</td></tr>
       <tr><td><label class="row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" data-acc="eval" ${acc.eval?"checked":""} ${prop.preguntasProc.length?"":"disabled"}><b class="small">Evaluación</b></label></td><td class="small muted">${(base.preguntasProc||[]).length} afirmaciones</td><td class="small">${prop.preguntasProc.length} + ${prop.preguntasMat.length} (MIPER) propuestas</td></tr>
     </tbody></table></div>
-    <div class="row"><button class="btn primary" id="ia-open">Aplicar lo marcado y abrir en el editor</button><button class="btn" id="ia-word">Descargar IT mejorada (Word)</button><button class="btn" id="ia-evw">Evaluación mejorada (Word)</button></div>
+    <div class="row"><button class="btn primary" id="ia-open">Aplicar lo marcado y abrir en el editor</button><button class="btn" id="ia-both">Descargar Word para la app (IT + evaluación)</button><button class="btn ghost" id="ia-word">Solo IT</button><button class="btn ghost" id="ia-evw">Solo evaluación</button></div>
+    <p class="small"><b>Para llevar la mejora a la app de Firebase:</b> descargue los Word con el botón de arriba y súbalos allá en <b>Cargar</b>. Se actualizará el mismo instructivo.</p>
     <p class="hint">Revise la propuesta en el editor antes de guardar. Si cambió contenido técnico, considere subir la versión del documento.</p></div>`;
     $$("[data-acc]",box).forEach(c=>c.onchange=()=>acc[c.dataset.acc]=c.checked);
     $("#ia-back",box).onclick=intro;
     $("#ia-open",box).onclick=()=>{S.draft=Object.assign(result(),p.id?{id:p.id}:{});delete S.draft._orig;opts.onOpen&&opts.onOpen();toast("Propuesta aplicada en el editor. Revise y guarde.");const tg=p.id?"#editar-"+p.id:"#nuevo";if(location.hash===tg)route();else location.hash=tg};
     $("#ia-word",box).onclick=()=>downloadWord(result());
+    $("#ia-both",box).onclick=async()=>{const r=result();await downloadWord(r);if((r.preguntasProc||[]).length)await downloadEvalWord(r)};
     $("#ia-evw",box).onclick=()=>downloadEvalWord(result());
   };
   intro();
 }
 
+
+const CLAUDE_URL=(window.HTP_CONFIG&&window.HTP_CONFIG.urlClaude)||"https://claude.ai/artifact/QcqmbZofohxjWwgRTKa9VB#cargar";
+function showMejorarEnClaude(p,box){
+  const hasQ=(p.preguntasProc||[]).length>0;
+  box.innerHTML=`<div class="stack"><h3>Mejorar en Claude · ${esc(p.codigo||p.titulo||"")}</h3>
+    <p class="small">La mejora con IA se hace en la versión de la app que está en Claude: es automática y no tiene costo extra. Son 4 pasos:</p>
+    <div class="ai-step"><span class="ai-n">1</span><div class="stack" style="gap:6px;flex:1"><b>Descargue el instructivo en Word</b><span class="small">Se descargan ${hasQ?"2 archivos: la IT (con su MIPER) y la evaluación":"la IT con su MIPER"}.</span><button class="btn primary" id="mc-dl">Descargar Word</button><span class="small muted" id="mc-st"></span></div></div>
+    <div class="ai-step"><span class="ai-n">2</span><div class="stack" style="gap:6px;flex:1"><b>Abra la app en Claude y súbalos</b><span class="small">En Claude: <b>Cargar → Subir Word o PDF</b>, elija los archivos descargados.</span><a class="btn primary" href="${esc(CLAUDE_URL)}" target="_blank" rel="noopener">Abrir la app en Claude</a></div></div>
+    <div class="ai-step"><span class="ai-n">3</span><div class="stack" style="gap:6px;flex:1"><b>Mejore con IA y descargue el resultado</b><span class="small">En la lista presione <b>Mejorar con IA</b>, luego <b>Aplicar</b> y en la propuesta <b>Descargar Word para la app</b>.</span></div></div>
+    <div class="ai-step"><span class="ai-n">4</span><div class="stack" style="gap:6px;flex:1"><b>Súbalo aquí</b><span class="small">En esta app: <b>Cargar → Subir Word o PDF</b> con los Word mejorados y <b>Guardar</b>. Se actualiza este mismo instructivo (código ${esc(p.codigo||"")}).</span><a class="btn" href="#cargar">Ir a Cargar</a></div></div></div>`;
+  $("#mc-dl",box).onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{await downloadWord(p);if(hasQ)await downloadEvalWord(p);$("#mc-st",box).textContent="Listo: revise su carpeta de Descargas."}finally{b.disabled=false}};
+}
 /* ---------- biblioteca en tabla: IT y MIPER con difundir / evaluar ---------- */
 Object.assign(views.procedimientos,{
   update(){
@@ -1582,7 +1601,7 @@ async function analyzeFile(f){
   return r;
 }
 function mergePartial(d,r){const p=r.partial||{};
-  if(r.kind==="it"){["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.firmasDoc)d.firmasDoc=p.firmasDoc;if(p.secciones&&p.secciones.length)d.secciones=p.secciones;if(p._orig){d._orig=p._orig;d.textoOriginal=String(r.text||"").slice(0,150000)}}
+  if(r.kind==="it"){["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.firmasDoc)d.firmasDoc=p.firmasDoc;if(p.secciones&&p.secciones.length)d.secciones=p.secciones;if(p.matriz&&p.matriz.length)d.matriz=p.matriz.map(normRow);["tarea","tipoTarea","lugares"].forEach(x=>{if(p[x])d[x]=p[x]});if(p._orig){d._orig=p._orig;d.textoOriginal=String(r.text||"").slice(0,150000)}}
   if(r.kind==="miper"){["tarea","tipoTarea","lugares"].forEach(x=>{if(p[x])d[x]=p[x]});if(p.matriz&&p.matriz.length)d.matriz=p.matriz.map(normRow)}
   if(r.kind==="eval"){if(p.preguntasProc&&p.preguntasProc.length)d.preguntasProc=p.preguntasProc;if(p.aprobacion)d.aprobacion=p.aprobacion}
 }
@@ -1695,13 +1714,13 @@ Object.assign(views.cargar,{
   renderList(){
     const box=$("#glist");const G=Object.values(this.groups);
     if(!G.length){box.innerHTML='<div class="empty"><b>Aún no ha subido archivos.</b>Cuando suba el Word o PDF, aquí aparecerá cada instructivo con lo que se reconoció.</div>';return}
-    const chip=(g,k)=>{const fs=g.files.filter(f=>f.kind===k);if(!fs.length)return'<span class="chip">—</span>';const f=fs[fs.length-1];return`<span class="chip ${f.ok?"ok":f.error?"bad":"warn"}" title="${esc(f.name)}">${f.ok?"✓ ":""}${esc(f.msg)}</span>`};
+    const chip=(g,k)=>{const fs=g.files.filter(f=>f.kind===k);if(!fs.length){if(k==="miper"&&g.draft.matriz.length)return`<span class="chip ok">✓ ${g.draft.matriz.length} filas</span>`;if(k==="eval"&&(g.draft.preguntasProc||[]).length)return`<span class="chip ok">✓ ${g.draft.preguntasProc.length} afirmaciones</span>`;return'<span class="chip">—</span>'}const f=fs[fs.length-1];return`<span class="chip ${f.ok?"ok":f.error?"bad":"warn"}" title="${esc(f.name)}">${f.ok?"✓ ":""}${esc(f.msg)}</span>`};
     box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Código</th><th>Título</th><th>Instructivo</th><th>MIPER</th><th>Evaluación</th><th>Formato</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
     ${G.map(g=>{const d=g.draft;const needAI=g.files.some(f=>!f.ok&&!f.error);return`<tr><td class="code">${esc(d.codigo||g.code)}${g.base?'<div><span class="chip">ya existe</span></div>':'<div><span class="chip info">nuevo</span></div>'}</td><td>${esc(d.titulo||"(sin título)")}<div class="small muted">${esc(g.files.map(f=>f.name).join(" · "))}</div></td>
       <td>${chip(g,"it")}</td><td>${chip(g,"miper")}</td><td>${chip(g,"eval")}</td>
       <td>${isHtpFormat(d)&&d.matriz.length&&(d.preguntasProc||[]).length?'<span class="chip ok">✓ Formato HTP</span>':`<button class="btn sm orange" data-up="${esc(g.code)}">Actualizar al formato HTP</button>`}</td>
       <td><select data-est="${esc(g.code)}" style="width:auto"><option value="vigente"${d.estado!=="borrador"?" selected":""}>Vigente</option><option value="borrador"${d.estado==="borrador"?" selected":""}>Borrador</option></select></td>
-      <td><div class="row" style="flex-wrap:nowrap">${needAI?`<button class="btn sm orange" data-ai="${esc(g.code)}">Ordenar con IA</button>`:""}<button class="btn sm orange" data-mia="${esc(g.code)}">Mejorar con IA</button><button class="btn sm" data-rev="${esc(g.code)}">Buscar mejoras</button><button class="btn sm" data-ed="${esc(g.code)}">Revisar</button><button class="btn sm ghost" data-rm="${esc(g.code)}">Quitar</button></div></td></tr>`}).join("")}
+      <td><div class="row" style="flex-wrap:nowrap">${needAI?`<button class="btn sm orange" data-ai="${esc(g.code)}">Ordenar con IA</button>`:""}${FB?`<a class="btn sm orange" href="${esc(CLAUDE_URL)}" target="_blank" rel="noopener" title="Abra la app en Claude y suba estos mismos archivos para mejorarlos con IA">Mejorar en Claude</a>`:`<button class="btn sm orange" data-mia="${esc(g.code)}">Mejorar con IA</button>`}<button class="btn sm" data-rev="${esc(g.code)}">Buscar mejoras</button><button class="btn sm" data-ed="${esc(g.code)}">Revisar</button><button class="btn sm ghost" data-rm="${esc(g.code)}">Quitar</button></div></td></tr>`}).join("")}
     </tbody></table></div>
     <div class="row" style="margin-top:12px"><button class="btn primary" id="save-all">Guardar ${G.length} en la biblioteca</button><span class="small muted" id="save-st">Puede revisar cada uno antes o guardarlos directamente.</span></div>`;
     $$("[data-est]",box).forEach(s=>s.onchange=()=>{this.groups[s.dataset.est].draft.estado=s.value});
@@ -1765,7 +1784,7 @@ function docxKit(){
   const cell=(c,o={})=>new X.TableCell({children:Array.isArray(c)?c:[para(c,{size:o.size||17,bold:o.bold,color:o.color,after:0,align:o.align})],shading:o.fill?{type:X.ShadingType.CLEAR,color:"auto",fill:o.fill}:undefined,columnSpan:o.span,verticalAlign:o.va,margins:{top:50,bottom:50,left:80,right:80}});
   const table=(rows,pcts,land)=>{const tot=land?13958:9026;const cw=pcts.map(p=>Math.round(tot*p/100));return new X.Table({width:{size:tot,type:X.WidthType.DXA},columnWidths:cw,layout:X.TableLayoutType.FIXED,rows})};
   const tr=(cells,o={})=>new X.TableRow({children:cells,tableHeader:o.header,height:o.h?{value:o.h,rule:"atLeast"}:undefined});
-  const heading=t=>new X.Paragraph({children:[run(t,{bold:true,color:NAVY,size:24})],spacing:{before:280,after:100},border:{bottom:{style:X.BorderStyle.SINGLE,size:8,color:ORANGE,space:2}}});
+  const heading=t=>new X.Paragraph({heading:X.HeadingLevel.HEADING_1,children:[run(t,{bold:true,color:NAVY,size:24})],spacing:{before:280,after:100},border:{bottom:{style:X.BorderStyle.SINGLE,size:8,color:ORANGE,space:2}}});
   const blocks=t=>textBlocks(t).flatMap(b=>{
     if(b.type==="list")return b.items.map(i=>new X.Paragraph({children:[run(i)],bullet:{level:0},spacing:{after:40}}));
     if(b.type==="sub")return[para(b.text,{bold:true,color:NAVY,before:120})];
