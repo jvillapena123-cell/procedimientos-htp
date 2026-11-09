@@ -610,6 +610,9 @@ views.editor={
       <p class="lede">Formato HTP: identificación, 13 secciones, MIPER DS 44 y evaluación V/F. Guarde como borrador o publique como vigente.</p></div>
       <div class="actions"><button class="btn" id="e-word">IT en Word</button><button class="btn" id="e-evw">Evaluación en Word</button>${d.id?'<button class="btn danger" id="e-del">Eliminar</button>':""}<button class="btn primary" id="e-save">Guardar</button></div></section>
     <div class="stack" id="ed">
+      <section class="panel ai"><h2>Importar desde Word</h2>
+        <p class="small" style="margin-bottom:10px">Suba los .docx con el formato HTP: el instructivo (IT), la MIPER y la evaluación. Puede subir uno o los tres juntos. La app los lee y llena este formulario; revise antes de guardar.</p>
+        <div class="row"><label class="btn orange" for="e-docx">Subir Word (IT, MIPER o evaluación)</label><input type="file" id="e-docx" multiple accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden><span class="small muted" id="e-docx-st"></span></div></section>
       <section class="panel"><h2>Identificación del documento</h2><div class="grid">
         ${inp("codigo","Código","IT-96-302")}${inp("titulo","Título","Traslado y Descarga de Productos de Acero","span 2")}
         ${inp("version","Versión","03")}${inp("versionAnterior","Versión anterior","Rev. anterior – 29/05/2025")}
@@ -650,6 +653,9 @@ views.editor={
         const ini=c[5],res=c[8];d.matriz.push({etapa:c[0]||"",puestos:c[1]||"",peligro:c[2]||"",riesgo:c[3]||"",dano:c[4]||"",p:pcOpt(ini),c:pcOpt(c[6]),evalIni:pcOpt(ini)==null?(ini||""):"",control:c[7]||"",pr:pcOpt(res),cr:pcOpt(c[9]),evalRes:pcOpt(res)==null?(res||""):"",responsable:c[10]||""});n++});
       $("#mx-paste").value="";this.renderMx();toast(n?`${n} filas agregadas`:"No se reconocieron filas. Copie con tabulaciones desde Excel.")};
     $$("[data-addq]",el).forEach(b=>b.onclick=()=>{d[b.dataset.addq].push(b.dataset.t==="vf"?{tipo:"vf",q:"",ops:["Verdadero","Falso"],ok:0,just:""}:{tipo:"alt",q:"",ops:["","","",""],ok:0,just:""});this.renderQs(b.dataset.addq,b.dataset.addq==="preguntasProc"?"qp":"qm")});
+    $("#e-docx",el).onchange=async e=>{const fs=[...e.target.files];if(!fs.length)return;$("#e-docx-st").innerHTML='<span class="spin"></span> Leyendo…';
+      try{const log=await importHtpWord(fs,d);this.render();toast("Word importado. Revise y guarde.");const st=$("#e-docx-st");if(st)st.textContent=log.join(" · ")}
+      catch(err){$("#e-docx-st").textContent=errMsg(err)}};
     $("#e-file",el).onchange=async e=>{const f=e.target.files[0];if(!f||!S.assets)return;toast("Subiendo archivo…");try{const r=await S.assets.upload(f);d.docAssetId=r.id;d.docNombre=f.name;d.docUrl=FB?r.url:null;this.render();toast("Archivo cargado. Recuerde guardar.")}catch(err){toast(errMsg(err))}};
     $("#e-rmdoc",el)&&($("#e-rmdoc",el).onclick=()=>{d.docAssetId=null;d.docNombre=null;d.docUrl=null;this.render()});
     $("#e-word",el).onclick=()=>downloadWord(this.snapshot());
@@ -958,6 +964,81 @@ views.personal={
   }
 };
 
+/* ---------- importación directa de Word con formato HTP (sin IA) ---------- */
+async function readDocxHtml(file){const r=await window.mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});const box=document.createElement("div");box.innerHTML=r.value;return box}
+function cellText(td){const ps=[...td.querySelectorAll("p,li")].filter(p=>!p.querySelector("p"));const t=ps.length?ps.map(p=>p.textContent.trim()).filter(Boolean).join("\n"):td.textContent.trim();return t.replace(/[ \t ]+/g," ").trim()}
+function tblRows(t){return [...t.rows].filter(tr=>tr.closest("table")===t).map(tr=>[...tr.cells].map(cellText))}
+const topTables=box=>[...box.children].filter(e=>e.tagName==="TABLE");
+const CODE_RE=/\b[A-Z]{2,4}-\d{2,3}-\d{2,4}\b/;
+function classifyDocx(box){const txt=box.textContent;
+  if(/peligro/i.test(txt)&&/(evaluaci[óo]n residual|VEP)/i.test(txt))return"miper";
+  if(/afirmaci[óo]n/i.test(txt)&&/(pauta de correcci[óo]n|verdadera|\(V\))/i.test(txt))return"eval";
+  return"it";}
+function parseIdRows(rows,d){
+  rows.forEach(r=>{for(let i=0;i<r.length-1;i+=2){const k=normH(r[i]),v=(r[i+1]||"").replace(/\s*✓\s*/g," ").replace(/\s{2,}/g," ").trim();
+    const f={proceso:"proceso",subproceso:"subproceso",actividad:"actividad",sistemasdegestion:"sistemas",version:"version",versionanterior:"versionAnterior"}[k];if(f&&v&&!d[f])d[f]=v}});
+  const h=rows.findIndex(r=>r.some(c=>/elabor/i.test(c))&&r.some(c=>/aprob/i.test(c)));
+  if(h>=0){const head=rows[h].map(normH);const fd=d.firmasDoc||blankFirmas();
+    rows.slice(h+1).forEach(r=>{const key=normH(r[0]);if(!["nombre","cargo","fecha"].includes(key))return;
+      [["elaboro","elabor"],["reviso","revis"],["aprobo","aprob"]].forEach(([k,p])=>{const j=head.findIndex(x=>x.startsWith(p));let v=j>=0?(r[j]||"").trim():"";if(/^\[.*\]$/.test(v))v="";if(v)fd[k][key]=v})});
+    d.firmasDoc=fd;}
+}
+function parseItDocx(box){
+  const d={secciones:[]};const kids=[...box.children];let cur=null;const secRe=/^\d{1,2}\.\s+\S/;
+  for(const el of kids){
+    const t=(el.textContent||"").trim();
+    if(!cur&&el.tagName!=="TABLE"&&t&&!/^H1$/.test(el.tagName)){if(!d.codigo&&CODE_RE.test(t)&&t.length<20){d.codigo=t.match(CODE_RE)[0];continue}if(!d.titulo&&d.codigo&&t.length>5&&!secRe.test(t)&&!/^contenido$/i.test(t))d.titulo=t;continue}
+    if(/^H[12]$/.test(el.tagName)&&secRe.test(t)&&!/^\d+\.\d/.test(t)){cur={titulo:t,lines:[]};d.secciones.push(cur);continue}
+    if(!cur){if(el.tagName==="TABLE")parseIdRows(tblRows(el),d);continue}
+    if(/^H[2-6]$/.test(el.tagName)){if(t)cur.lines.push(t);continue}
+    if(el.tagName==="UL"||el.tagName==="OL"){[...el.querySelectorAll("li")].forEach(li=>cur.lines.push("- "+li.textContent.trim()));continue}
+    if(el.tagName==="TABLE"){const rows=tblRows(el);
+      if(rows.length===1&&rows[0].length<=3&&/^\d+$/.test(rows[0][0]||"")){const[n,desc="",rk=""]=rows[0];const parts=desc.split("\n").filter(Boolean);
+        cur.lines.push(`Paso ${n}: ${parts[0]||""}${rk&&!/^[—-]$/.test(rk)?` — Riesgo: ${rk}`:""}`);parts.slice(1).forEach(p=>cur.lines.push("- "+p.replace(/^[-•]\s*/,"")));continue}
+      rows.forEach(r=>{if(r.some(Boolean))cur.lines.push(r.map(c=>c.replace(/\n/g," / ").replace(/\|/g,"/")).join(" | "))});cur.lines.push("");continue}
+    if(t)cur.lines.push(t);
+  }
+  d.secciones=d.secciones.map(s=>({titulo:s.titulo,texto:s.lines.join("\n").replace(/\n{3,}/g,"\n\n").trim()}));
+  return d;
+}
+function parseMiperDocx(box){
+  const d={matriz:[]};
+  topTables(box).forEach(t=>{const rows=tblRows(t);
+    rows.forEach(r=>{for(let i=0;i<r.length-1;i+=2){const k=normH(r[i]),v=r[i+1]||"";
+      if(k==="tarea")d.tarea=v;else if(k==="tipodetarea")d.tipoTarea=v;else if(k==="lugaresespecificos")d.lugares=v;
+      else if(k.startsWith("instrucciondetrabajo")&&CODE_RE.test(v))d.codigo=v.match(CODE_RE)[0]}});
+    if(!(rows.some(r=>r.some(c=>/peligro/i.test(c)))&&rows.some(r=>r.some(c=>/residual/i.test(c)))))return;
+    rows.forEach(r=>{if(!/^\d+$/.test(r[0]||""))return;
+      if(r.length>=14)d.matriz.push({etapa:r[1],puestos:r[2],peligro:r[3],riesgo:r[4],dano:r[5],p:pcOpt(r[6]),c:pcOpt(r[7]),evalIni:"",control:r[9],pr:pcOpt(r[10]),cr:pcOpt(r[11]),evalRes:"",responsable:r[13]});
+      else if(r.length>=10)d.matriz.push({etapa:r[1],puestos:r[2],peligro:r[3],riesgo:r[4],dano:r[5],p:null,c:null,evalIni:r[6],control:r[7],pr:null,cr:null,evalRes:r[8],responsable:r[9]});
+    });
+  });
+  return d;
+}
+function parseEvalDocx(box){
+  const qs={},just={};const m=box.textContent.match(/aprueba con (\d+) de (\d+)/i);
+  topTables(box).forEach(t=>tblRows(t).forEach(r=>{if(!/^\d+$/.test(r[0]||""))return;const n=+r[0];
+    if(r.length>=3&&/^(V|F)$/i.test((r[1]||"").trim()))just[n]=[r[1].trim().toUpperCase(),r[2]||""];
+    else if((r[1]||"").length>15)qs[n]=r[1]}));
+  const preg=Object.keys(qs).map(Number).sort((a,b)=>a-b).map(n=>({tipo:"vf",q:qs[n],ops:["Verdadero","Falso"],ok:just[n]&&just[n][0]==="F"?1:0,just:just[n]?just[n][1]:""}));
+  return{preguntasProc:preg,aprobacion:m?Math.round(+m[1]*100/+m[2]):null,sinPauta:preg.length>0&&!Object.keys(just).length};
+}
+async function importHtpWord(files,d){
+  if(!window.mammoth)throw{message:"No se pudo cargar el lector de Word. Recargue la página."};
+  const log=[];
+  for(const f of files){let box;try{box=await readDocxHtml(f)}catch{log.push(`${f.name}: no se pudo leer (debe ser .docx, no .doc antiguo)`);continue}
+    const k=classifyDocx(box);
+    if(k==="it"){const r=parseItDocx(box);["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior"].forEach(x=>{if(r[x])d[x]=r[x]});if(r.firmasDoc)d.firmasDoc=r.firmasDoc;if(r.secciones.length)d.secciones=r.secciones;
+      log.push(`${f.name}: instructivo con ${r.secciones.length} secciones`)}
+    else if(k==="miper"){const r=parseMiperDocx(box);["tarea","tipoTarea","lugares"].forEach(x=>{if(r[x])d[x]=r[x]});if(!d.codigo&&r.codigo)d.codigo=r.codigo;if(r.matriz.length)d.matriz=r.matriz;
+      log.push(`${f.name}: MIPER con ${r.matriz.length} filas`)}
+    else{const r=parseEvalDocx(box);if(r.preguntasProc.length)d.preguntasProc=r.preguntasProc;if(r.aprobacion)d.aprobacion=r.aprobacion;
+      log.push(`${f.name}: evaluación con ${r.preguntasProc.length} afirmaciones${r.sinPauta?" (sin pauta: marque las respuestas correctas)":""}`)}
+  }
+  d.matriz=(d.matriz||[]).map(normRow);d.preguntasProc=padQs(d.preguntasProc||[]);d.preguntasMat=padQs(d.preguntasMat||[]);
+  return log;
+}
+
 /* ---------- vista: cargar existentes ---------- */
 const TPL = {
   Procedimientos:["Código","Título","Versión","Versión anterior","Proceso","Subproceso","Actividad","Sistemas de gestión","Área","Estado","Nota aprobación %","Elaboró nombre","Elaboró cargo","Elaboró fecha","Revisó nombre","Revisó cargo","Revisó fecha","Aprobó nombre","Aprobó cargo","Aprobó fecha","Tarea MIPER","Tipo de tarea","Lugares específicos","Archivo PDF"],
@@ -1142,11 +1223,12 @@ views.cargar={
       <div class="grid"><label class="f">Código<input type="text" id="w-cod" data-k="codigo" value="${esc(w.codigo)}" placeholder="Se toma del documento"></label>
         <label class="f">Área<select id="w-area" data-k="area">${AREAS.map(a=>`<option${a===w.area?" selected":""}>${esc(a)}</option>`).join("")}</select></label></div>
       <label class="f">Texto extraído <span class="hint">Puede revisarlo o pegar aquí el texto de un PDF</span><textarea id="w-tx" data-k="texto" rows="12">${esc(w.texto)}</textarea></label>
-      <div class="row"><button class="btn primary" id="w-run" ${S.sample?"":"disabled"}>Convertir al formato HTP</button><span class="small muted" id="w-st"></span></div>
+      <div class="row"><button class="btn primary" id="w-direct" ${(this.wfiles||[]).length?"":"disabled"}>Importar directo (formato HTP)</button><button class="btn" id="w-run" ${S.sample?"":"disabled"}>Convertir con IA</button><span class="small muted" id="w-st"></span></div>
+      <p class="hint"><b>Importar directo</b> lee los Word que ya tienen el formato HTP (IT, MIPER DS 44 y evaluación V/F) sin usar IA. <b>Convertir con IA</b> sirve para documentos con otro formato.</p>
       ${S.sample?"":'<p class="hint">La IA no está disponible en esta vista.</p>'}</section>
       <section class="panel"><h2>Qué pasa después</h2><div class="stack small"><p>El resultado se abre en el editor como <b>borrador</b> con la identificación, las secciones, la MIPER y la evaluación para revisar.</p><p>Si el código ya existe en la biblioteca, se abre ese instructivo para actualizarlo.</p><p class="muted">Para muchos instructivos a la vez, la planilla Excel es más rápida.</p></div></section></div>`;
     bindInputs($("#wf",c),w);
-    $("#wd",c).onchange=async e=>{const fs=[...e.target.files];if(!fs.length||!needLib("el lector de Word","mammoth"))return;
+    $("#wd",c).onchange=async e=>{const fs=[...e.target.files];if(!fs.length||!needLib("el lector de Word","mammoth"))return;this.wfiles=fs;
       const parts=[];const names=[];
       for(const f of fs){try{const r=await window.mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()});const box=document.createElement("div");box.innerHTML=r.value;
           parts.push(`===== ARCHIVO: ${f.name} =====`);
@@ -1157,6 +1239,15 @@ views.cargar={
       w.texto=parts.join("\n");w.files=names;if(!w.codigo){const m=w.texto.match(/\b(?:IT|PR|PO|PTS|INS)-\d{2,3}-\d{2,4}\b/);if(m)w.codigo=m[0]}
       this.renderWord();if(names.length)toast(`Texto extraído de ${names.length} archivo${names.length>1?"s":""}. Revíselo y presione Convertir.`)};
     $("#w-run",c).onclick=()=>this.convertWord();
+    $("#w-direct",c).onclick=async ev=>{const b=ev.currentTarget;b.disabled=true;$("#w-st").innerHTML='<span class="spin"></span> Leyendo…';
+      try{const d=blankProc();d.area=w.area;const log=await importHtpWord(this.wfiles,d);if(w.codigo)d.codigo=w.codigo;
+        if(!d.titulo&&!d.secciones.some(s=>s.texto)&&!d.matriz.length&&!d.preguntasProc.length)throw{message:"No se reconoció contenido con el formato HTP. Pruebe con “Convertir con IA”."};
+        const dup=S.procs.find(p=>d.codigo&&normCode(p.codigo)===normCode(d.codigo));
+        if(dup){const base=Object.assign(blankProc(),clone(dup));const fresh=d;["codigo","titulo","proceso","subproceso","actividad","sistemas","version","versionAnterior","tarea","tipoTarea","lugares","aprobacion"].forEach(k=>{if(fresh[k])base[k]=fresh[k]});
+          if(fresh.firmasDoc)base.firmasDoc=fresh.firmasDoc;if(fresh.secciones.some(s=>s.texto))base.secciones=fresh.secciones;if(fresh.matriz.length)base.matriz=fresh.matriz;if(fresh.preguntasProc.length)base.preguntasProc=fresh.preguntasProc;
+          base.id=dup.id;S.draft=base;this.word=null;this.wfiles=[];toast(`${log.join(" · ")}. El código ${d.codigo} ya existía: se abrió para actualizarlo.`);location.hash="#editar-"+dup.id;return}
+        S.draft=d;this.word=null;this.wfiles=[];toast(log.join(" · "));location.hash="#nuevo";
+      }catch(err){b.disabled=false;$("#w-st").textContent=errMsg(err)}};
   },
   async convertWord(){
     const w=this.word;if(w.texto.trim().length<80)return toast("Suba los Word o pegue el texto del instructivo");
