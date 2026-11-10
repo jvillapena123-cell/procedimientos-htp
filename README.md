@@ -119,3 +119,10 @@ Los registros firmados no se pueden modificar ni borrar; solo la cuenta que los 
 
 ## Respaldo
 Desde **Cargar → Descargar biblioteca actual en este formato** obtiene todos los instructivos en la misma planilla. Cada instructivo se descarga también como IT en Word (con la MIPER como anexo horizontal) y como Evaluación en Word con su pauta. El dashboard exporta los registros a CSV, y cada procedimiento genera su registro de firmas en PDF.
+
+## Uso simple (desde noviembre 2026)
+
+- **Trabajadores**: entran desde su celular con **RUT + clave de 4 números**. La primera vez crean su clave (deben estar en la Nómina de personal). Ven solo sus instructivos pendientes, los leen paso a paso (con botón 🔊 Escuchar), responden con botones grandes Verdadero/Falso y firman con el dedo.
+- **Jefes/supervisores**: entran con correo. Pantalla de inicio con botones grandes: *Leer y firmar* (para firmar a un trabajador en el equipo del jefe), *Ver avance*, *Subir instructivo*, *Ideas y problemas* y *Más opciones* (biblioteca, nómina, usuarios, generador).
+- **Olvidó su clave**: en Más opciones → Nómina de personal → botón *Reiniciar clave* del trabajador.
+- Después de actualizar, publique de nuevo `firestore.rules` en Firebase → Firestore → Reglas.

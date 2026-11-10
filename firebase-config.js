@@ -17,7 +17,7 @@ window.HTP_CONFIG = {
   // IA automática GRATIS con Gemini (Firebase AI Logic, plan Spark sin costo).
   // Se activa en la consola de Firebase: Servicios de IA → AI Logic → Comenzar → Gemini Developer API.
   // Si no está activada, la app usa el modo manual con claude.ai. Ponga false para usar siempre el modo manual.
-  iaGratis: true,
+  iaGratis: false,
   modeloIA: "gemini-3.8-flash",
 
   // IA automática para el Generador y la conversión de Word. Déjelo vacío para usar el modo manual

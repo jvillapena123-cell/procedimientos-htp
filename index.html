@@ -224,6 +224,98 @@ table.dt td{font-size:.85rem}
 .lib td.lib-name a{color:var(--ink);text-decoration:none}
 .lib td.lib-name a:hover{text-decoration:underline}
 .sigs{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+/* ===== modo simple ===== */
+nav.tabs{display:none!important}
+.s-home{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:8px 14px;font-size:1rem;white-space:nowrap}
+body.trab .s-home,body:not(.authok) .s-home.fbonly{display:none}
+.s-wrap{display:flex;flex-direction:column;gap:16px;padding-block:8px 40px;font-size:1.06rem}
+.s-narrow{max-width:560px;margin-inline:auto;width:100%}
+.s-h1{font-size:clamp(1.5rem,5.4vw,2.1rem);line-height:1.15;margin:0;color:var(--ink)}
+.s-h2{font-size:1.35rem;line-height:1.2;margin:2px 0 0;color:var(--ink)}
+.s-sub{font-size:1.15rem;color:var(--muted);margin:4px 0 0}
+.s-big{font-size:1.15rem;line-height:1.55}
+.s-big li{margin-bottom:6px}
+.s-lbl{display:block;font-size:.85rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.s-tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.s-tiles-sm{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.s-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;font:inherit;cursor:pointer;padding:22px;border-radius:18px;border:2px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;min-height:150px;box-shadow:0 2px 0 rgba(0,0,0,.06);transition:transform .08s}
+.s-tile:active{transform:scale(.98)}
+.s-tile b{font-size:1.4rem;line-height:1.2}
+.s-tile span:not(.s-ico){color:var(--muted);font-size:1rem}
+.s-tiles-sm .s-tile{min-height:0;flex-direction:row;align-items:center;padding:16px}
+.s-tiles-sm .s-tile b{font-size:1.1rem}
+.s-tile-row{flex-direction:row;align-items:center;min-height:0}
+.s-ico{font-size:2.6rem;line-height:1}
+.s-tiles-sm .s-ico,.s-tile-row .s-ico{font-size:1.8rem}
+.s-ico-l{font-size:1.9rem;line-height:1;display:block}
+.s-ico-xl{font-size:4.2rem;line-height:1;display:block;margin-bottom:6px}
+.t-azul{border-color:var(--accent);background:var(--info-bg)}
+.t-verde{border-color:var(--ok);background:var(--ok-bg)}
+.t-naranja{border-color:var(--orange);background:var(--warn-bg)}
+.t-amarillo{border-color:var(--warn);background:var(--warn-bg)}
+.s-badge{background:var(--bad);color:#fff;border-radius:999px;padding:1px 9px}
+.s-card{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.s-card summary{cursor:pointer}
+.s-center{align-items:center;text-align:center}
+.s-win{border-color:var(--ok);background:var(--ok-bg)}
+.s-lose{border-color:var(--warn);background:var(--warn-bg)}
+.s-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.s-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-size:1.15rem;font-weight:700;min-height:58px;padding:10px 20px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-decoration:none;text-align:center}
+.s-btn:disabled{opacity:.55;cursor:default}
+.s-btn.full{width:100%}
+.s-btn.prim{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.s-btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.s-btn.no{background:var(--bad);border-color:var(--bad);color:#fff}
+.s-btn.pick{outline:4px solid var(--ink);outline-offset:2px}
+.s-btn.s-left{justify-content:flex-start;text-align:left}
+.s-xl{min-height:72px;font-size:1.35rem}
+.s-voz{align-self:flex-start;background:var(--info-bg);border-color:var(--accent);color:var(--ink);min-height:48px;font-size:1.05rem}
+.s-voz.on{background:var(--accent);color:var(--on-accent)}
+.s-x{min-height:46px;font-size:1rem;padding:6px 14px}
+.s-input{font:inherit;font-size:1.2rem;width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.s-err{color:var(--bad);font-weight:700;font-size:1.05rem;min-height:1.3em;margin:0}
+.s-display{font-family:var(--mono);font-size:2rem;font-weight:700;text-align:center;padding:16px;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);letter-spacing:.04em}
+.s-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.s-keypad button{font:inherit;font-size:1.9rem;font-weight:700;min-height:68px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;touch-action:manipulation}
+.s-keypad button:active{background:var(--info-bg)}
+.s-dots{display:flex;justify-content:center;gap:18px;padding:14px}
+.s-dots span{width:26px;height:26px;border-radius:50%;border:3px solid var(--ink)}
+.s-dots span.on{background:var(--ink)}
+.s-persona{flex-direction:row;align-items:center}
+.s-persona b{font-size:1.3rem;display:block}
+.s-it{display:flex;align-items:center;gap:14px;width:100%;text-align:left;font:inherit;padding:16px;border-radius:16px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.s-it.bad{border-color:var(--bad)}.s-it.warn{border-color:var(--warn)}.s-it.ok{border-color:var(--ok);opacity:.85}
+.s-ic{font-size:1.7rem}
+.s-it-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.s-it-t b{font-size:1.2rem;line-height:1.25}
+.s-it-t span{color:var(--muted)}
+.s-go{font-weight:700;white-space:nowrap;color:var(--accent)}
+.s-top{display:flex;align-items:center;gap:12px}
+.s-mini{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+.s-bar{flex:1;height:12px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.s-bar span{display:block;height:100%;background:var(--accent);border-radius:999px}
+.s-bar-l{width:100%;flex:none;height:16px}
+.s-bar.ok span{background:var(--ok)}.s-bar.warn span{background:var(--warn)}.s-bar.bad span{background:var(--bad)}
+.s-nav{display:grid;grid-template-columns:1fr 2fr;gap:12px}
+.s-vf{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.s-vf .s-btn{flex-direction:column;min-height:110px;font-size:1.3rem}
+.s-q{font-size:1.35rem;line-height:1.45;font-weight:600;margin:0;color:var(--ink)}
+.s-aviso{background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:10px 14px;font-weight:700}
+.s-band{border-radius:12px;padding:10px 14px;font-size:1.1rem;background:var(--sunk);color:var(--ink)}
+.s-band.ok{background:var(--ok-bg)}.s-band.info{background:var(--info-bg)}.s-band.warn{background:var(--warn-bg)}.s-band.bad{background:var(--bad-bg);color:var(--bad)}
+.s-blk{border-top:1px solid var(--line);padding-top:10px}
+.s-blk ul{margin:0;padding-left:22px}.s-blk p{margin:0}
+.s-blk-ok{background:var(--ok-bg);border:0;border-radius:12px;padding:12px}
+.s-hecho{list-style:none;padding:0;margin:0}
+.s-sig canvas{aspect-ratio:3/1}
+.s-sig{max-width:none}
+.s-num{font-size:3.4rem;font-weight:800;line-height:1}
+.s-num-s{font-size:1.6rem;font-weight:800}
+.s-num.ok,.s-num-s.ok{color:var(--ok)}.s-num.warn,.s-num-s.warn{color:var(--warn)}.s-num.bad,.s-num-s.bad{color:var(--bad)}
+.s-falta{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.s-falta .s-btn{min-height:48px;font-size:1rem;padding:6px 14px}
+@media (max-width:480px){.s-tile{min-height:0;flex-direction:row;align-items:center;padding:16px}.s-tile span:not(.s-ico){display:none}.s-tile b{font-size:1.25rem}.s-ico{font-size:2.2rem}.s-card{padding:16px}.top .brand-t span{display:none}}
+
 
 body:not(.authok) nav.tabs{display:none}
 .who{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--band-muted)}
@@ -247,6 +339,7 @@ dialog ol{margin:0;padding-left:20px}
       <div class="logo"><img alt="HTP Huachipato Terminal Portuario" src="data:image/png;base64,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"></div>
       <div class="brand-t"><b>Procedimientos operativos</b><span>Unidad Terminal Marítimo</span></div>
     </div>
+    <a class="s-home fbonly" href="#inicio">🏠 Inicio</a>
     <nav class="tabs" aria-label="Secciones">
       <a href="#miestado" data-r="miestado">Mi estado</a>
       <a href="#dashboard" data-r="dashboard">Dashboard</a>
@@ -390,12 +483,14 @@ function procCounts(map,pid){const m=map[pid]||{};const v=Object.values(m);retur
 const views={};let cur=null;
 function route(){
   if(FB&&!document.body.classList.contains("authok"))return;
-  const h=(location.hash||(S.canEdit?"#dashboard":"#miestado")).slice(1);
+  const h=(location.hash||(S.rol==="trabajador"?"#terreno":"#inicio")).slice(1);
   let name=h,arg=null;
   if(h.startsWith("p-")){name="detalle";arg=h.slice(2)}
   else if(h.startsWith("editar-")){name="editor";arg=h.slice(7)}
   else if(h==="nuevo"){name="editor";arg=null}
-  if(!views[name]){name="dashboard"}
+  if(!views[name]){name="inicio"}
+  if(S.rol==="trabajador"&&!["terreno","idea"].includes(name)){name="terreno";if(location.hash!=="#terreno")history.replaceState(null,"","#terreno")}
+  Voz.parar();
   const navKey={detalle:"procedimientos",editor:"procedimientos"}[name]||name;
   $$("nav.tabs a").forEach(a=>{if(a.dataset.r!==navKey)a.removeAttribute("aria-current");else a.setAttribute("aria-current","page")});
   cur={name,arg,v:views[name]};
@@ -576,7 +671,7 @@ views.detalle={
       $$("[data-pdf]",c).forEach(b=>b.onclick=()=>{const[o,i]=b.dataset.pdf.split("|");registroPDF(p,regs.filter(r=>r.owner===o&&r.id===i))});
       $$("[data-anular]",c).forEach(b=>b.onclick=async()=>{
         if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="¿Confirmar anulación?";b.classList.add("danger");return}
-        try{await S.db.doc(`evaluaciones/${S.uid}/regs/${b.dataset.anular}`).update({anulado:true,anuladoAt:Date.now()});toast("Registro anulado")}catch(e){toast(errMsg(e))}
+        try{await S.db.doc(`evaluaciones/${S.uid}/regs/${b.dataset.anular}`).update({anulado:true,anuladoAt:Date.now()});const rr=regs.find(x=>x.owner===S.uid&&x.id===b.dataset.anular);if(FB&&rr&&rr.pkey)S.db.doc(`trabajadores/${rr.pkey}/regs/${rr.id}`).update({anulado:true,anuladoAt:Date.now()}).catch(()=>{});toast("Registro anulado")}catch(e){toast(errMsg(e))}
       });
     }
   }
@@ -981,7 +1076,7 @@ views.personal={
     const q=($("#pq",el).value||"").toLowerCase();const list=S.personal.filter(p=>!q||[p.nombre,p.rut,fmtRut(p.rut),p.empresa,p.cargo].join(" ").toLowerCase().includes(q)).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
     $('[data-slot="n"]',el).textContent=`${activos().length} activos`;
     if(!list.length){box.innerHTML=`<div class="empty"><b>${S.personal.length?"Nadie coincide con la búsqueda.":"La nómina está vacía."}</b>${S.personal.length?"":"Agregue trabajadores uno a uno o pegue la nómina desde Excel."}</div>`;return}
-    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>RUT</th><th>Cargo · Empresa</th><th>Turno</th><th>Estado</th><th></th></tr></thead><tbody>${list.map(p=>`<tr><td>${esc(p.nombre)}</td><td class="code">${esc(fmtRut(p.rut))}</td><td>${esc(p.cargo)}<div class="small muted">${esc(p.empresa)}</div></td><td class="small">${esc(p.turno)}</td><td>${p.activo!==false?'<span class="chip ok">Activo</span>':'<span class="chip">Inactivo</span>'}</td><td><button class="btn sm" data-tog="${esc(p.id)}">${p.activo!==false?"Desactivar":"Activar"}</button></td></tr>`).join("")}</tbody></table></div>`;
+    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>RUT</th><th>Cargo · Empresa</th><th>Turno</th><th>Estado</th><th></th></tr></thead><tbody>${list.map(p=>`<tr><td>${esc(p.nombre)}</td><td class="code">${esc(fmtRut(p.rut))}</td><td>${esc(p.cargo)}<div class="small muted">${esc(p.empresa)}</div></td><td class="small">${esc(p.turno)}</td><td>${p.activo!==false?'<span class="chip ok">Activo</span>':'<span class="chip">Inactivo</span>'}</td><td><div class="row"><button class="btn sm" data-tog="${esc(p.id)}">${p.activo!==false?"Desactivar":"Activar"}</button>${FB&&rutOk(p.rut)?`<button class="btn sm" data-pin="${esc(normRut(p.rut))}" title="El trabajador creará una clave nueva al entrar">Reiniciar clave</button>`:""}</div></td></tr>`).join("")}</tbody></table></div>`;
     $$("[data-tog]",box).forEach(b=>b.onclick=async()=>{const p=S.personal.find(x=>x.id===b.dataset.tog);try{await S.db.doc(`personal/${p.id}`).update({activo:p.activo===false,updatedAt:Date.now()})}catch(e){toast(errMsg(e))}});
   }
 };
@@ -1764,6 +1859,324 @@ ${txt}`;
   }
 });
 
+/* =====================================================================
+   MODO SIMPLE: pantallas grandes, un paso por pantalla, audio
+   ===================================================================== */
+const S2={persona:null,yo:null};
+const soyTrabajador=()=>S.rol==="trabajador";
+const Voz={
+  ok:()=>typeof window!=="undefined"&&"speechSynthesis" in window,
+  voz(){const vs=speechSynthesis.getVoices()||[];return vs.find(v=>/es[-_]CL/i.test(v.lang))||vs.find(v=>/es[-_](US|MX|419|AR)/i.test(v.lang))||vs.find(v=>/^es/i.test(v.lang))},
+  limpia(t){return String(t||"").replace(/\s*\|\s*/g,", ").replace(/^[-•]\s*/gm,"").replace(/\((CS|VH|AC|IP|[A-Z]\d)\)/g,"").replace(/\bEPP\b/g,"E P P").replace(/\bIT\b/g,"instructivo").replace(/\bVIT\b/g,"V I T").replace(/\n+/g,". ").replace(/\s{2,}/g," ")},
+  hablar(t,btn){
+    if(!this.ok()){toast("Este equipo no puede leer en voz alta.");return}
+    const sonando=speechSynthesis.speaking;speechSynthesis.cancel();
+    $$("[data-voz]").forEach(b=>{b.textContent="🔊 Escuchar";b.classList.remove("on")});
+    if(sonando&&btn&&btn.dataset.on==="1"){btn.dataset.on="";return}
+    const u=new SpeechSynthesisUtterance(this.limpia(t));const v=this.voz();if(v)u.voice=v;u.lang=v?v.lang:"es-CL";u.rate=.92;
+    if(btn){btn.dataset.on="1";btn.textContent="⏹ Detener";btn.classList.add("on");u.onend=u.onerror=()=>{btn.dataset.on="";btn.textContent="🔊 Escuchar";btn.classList.remove("on")}}
+    speechSynthesis.speak(u);
+  },
+  parar(){try{if(this.ok())speechSynthesis.cancel()}catch{}}
+};
+try{if(Voz.ok())speechSynthesis.getVoices()}catch{}
+const vozBtn=()=>Voz.ok()?`<button type="button" class="s-btn s-voz" data-voz>🔊 Escuchar</button>`:"";
+
+/* ---------- estado de una persona ---------- */
+function docsDe(p){const it=(p.secciones||[]).some(s=>String(s.texto).trim().length>20&&!/^\[completar/i.test(String(s.texto).trim()));return{it,qp:(p.preguntasProc||[]).length,mx:(p.matriz||[]).length,qm:(p.preguntasMat||[]).length}}
+function regsDe(key){return soyTrabajador()?(S.misRegs||[]):allRegs().filter(r=>r.pkey===key)}
+function estadoDe(p,key){
+  const d=docsDe(p);const rs=regsDe(key).filter(r=>!r.anulado&&r.pid===p.id&&String(r.version)===String(p.version));
+  const e={pd:rs.some(r=>r.procLeido),pe:rs.some(r=>r.procOk),md:rs.some(r=>r.matLeida),me:rs.some(r=>r.matOk)};
+  const falta=[];if(d.it&&!e.pd)falta.push("leerIT");if(d.qp&&!e.pe)falta.push("pruebaIT");if(d.mx&&!e.md)falta.push("leerMX");if(d.qm&&!e.me)falta.push("pruebaMX");
+  const total=[d.it,d.qp>0,d.mx>0,d.qm>0].filter(Boolean).length;
+  return{d,e,falta,total,hechos:total-falta.length};
+}
+const FALTA_TXT={leerIT:"leer el instructivo",pruebaIT:"responder la prueba",leerMX:"conocer los riesgos",pruebaMX:"prueba de riesgos"};
+
+/* ---------- teclado numérico grande ---------- */
+function teclado(modo){const k=["1","2","3","4","5","6","7","8","9",modo==="rut"?"K":"","0","⌫"];
+  return`<div class="s-keypad">${k.map(x=>x?`<button type="button" data-k="${x}" aria-label="${x==="⌫"?"Borrar":x}">${x}</button>`:"<span></span>").join("")}</div>`}
+function bindTeclado(root,{get,set,max,permitK,onEnter}){
+  const press=x=>{let v=get();if(x==="⌫")v=v.slice(0,-1);else if(x==="K"){if(permitK&&v.length>=7&&!/K$/.test(v))v+="K"}else if(v.length<max&&!/K$/.test(v))v+=x;set(v)};
+  $$("[data-k]",root).forEach(b=>b.onclick=()=>press(b.dataset.k));
+  if(S2.keyH)document.removeEventListener("keydown",S2.keyH);
+  S2.keyH=e=>{if(!root.isConnected){document.removeEventListener("keydown",S2.keyH);return}if(e.target&&/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+    if(/^[0-9]$/.test(e.key))press(e.key);else if(/^k$/i.test(e.key))press("K");else if(e.key==="Backspace")press("⌫");else if(e.key==="Enter"&&onEnter){e.preventDefault();onEnter()}};
+  document.addEventListener("keydown",S2.keyH);
+}
+const rutVista=v=>!v?'<span class="muted">__.___.___-_</span>':v.length<2?esc(v):esc(fmtRut(v));
+
+/* ---------- INICIO ---------- */
+views.inicio={
+  mount(el){if(soyTrabajador()){location.hash="#terreno";return}this.el=el;this.paint()},
+  update(){if(this.el&&this.el.isConnected)this.paint()},
+  paint(){
+    const nuevas=S.canEdit?Object.values(S.mejoras||{}).flat().filter(m=>(m.estado||"nueva")==="nueva").length:0;
+    const tiles=[["#firmar","✍️","Leer y firmar","Un trabajador lee el instructivo, responde y firma.","t-azul"],
+      ["#avance","📊","Ver avance","Quién ya firmó y quién falta.","t-verde"],
+      S.canEdit&&["#cargar","📤","Subir instructivo","Suba el Word o PDF de la IT y su matriz.","t-naranja"],
+      [S.canEdit?"#mejoras":"#idea","💡","Ideas y problemas",S.canEdit?(nuevas?`<b class="s-badge">${nuevas} nuevas</b> para revisar.`:"Lo que envía el personal."):"Envíe una idea o avise un problema.","t-amarillo"],
+      ["#mas","⚙️","Más opciones","Biblioteca, nómina, usuarios y herramientas.","t-gris"]].filter(Boolean);
+    this.el.innerHTML=`<div class="s-wrap"><div><h1 class="s-h1">Hola${S.me&&S.me.name?", "+esc(String(S.me.name).split(" ")[0]):""} 👋</h1><p class="s-sub">¿Qué quiere hacer?</p></div>
+      <div class="s-tiles">${tiles.map(([h,i,t,d,c])=>`<a class="s-tile ${c}" href="${h}"><span class="s-ico" aria-hidden="true">${i}</span><b>${t}</b><span>${d}</span></a>`).join("")}</div></div>`;
+  }
+};
+views.mas={
+  mount(el){
+    const op=[["#procedimientos","📚","Biblioteca de instructivos"],["#dashboard","📈","Panel detallado"],["#personal","👥","Nómina de personal"+(FB?" y claves":"")],["#evaluar","📝","Formulario completo de difusión"],["#miestado","🙋","Mi estado"],
+      S.canEdit&&["#generador","✨","Generador de instructivos"],S.canEdit&&["#mejoras","💬","Bandeja de ideas y problemas"],S.isAdmin&&["#usuarios","🔑","Usuarios y permisos"]].filter(Boolean);
+    el.innerHTML=`<div class="s-wrap"><div><h1 class="s-h1">⚙️ Más opciones</h1><p class="s-sub">Herramientas para jefes y administradores.</p></div>
+      <div class="s-tiles s-tiles-sm">${op.map(([h,i,t])=>`<a class="s-tile t-gris" href="${h}"><span class="s-ico" aria-hidden="true">${i}</span><b>${t}</b></a>`).join("")}</div>
+      <a class="s-btn full" href="#inicio">◀ Volver al inicio</a></div>`;
+  }
+};
+
+/* ---------- ¿QUIÉN VA A FIRMAR? (equipo del jefe) ---------- */
+views.firmar={
+  mount(el){if(soyTrabajador()){location.hash="#terreno";return}this.el=el;this.rut="";this.paso="rut";this.err="";this.paint()},
+  update(){if(this.paso==="rut"&&this.el&&this.el.isConnected&&!$("#k-q:focus"))this.buscar()},
+  paint(){
+    const el=this.el;
+    if(this.paso==="rut"){
+      el.innerHTML=`<div class="s-wrap s-narrow"><div><h1 class="s-h1">✍️ ¿Quién va a firmar?</h1><p class="s-sub">Escriba el RUT del trabajador.</p></div>
+        <div class="s-display" id="k-d" aria-live="polite">${rutVista(this.rut)}</div><p class="s-err" id="k-err">${esc(this.err)}</p>
+        ${teclado("rut")}<button class="s-btn prim full" id="k-ok">Continuar ▶</button>
+        <details class="s-card"><summary class="s-big"><b>🔎 O búsquelo por nombre</b></summary><input type="search" id="k-q" class="s-input" placeholder="Escriba parte del nombre" autocomplete="off"><div id="k-l" class="stack" style="margin-top:10px"></div></details>
+        <a class="s-btn full" href="#inicio">◀ Volver</a></div>`;
+      bindTeclado(el,{get:()=>this.rut,set:v=>{this.rut=v;this.err="";$("#k-d").innerHTML=rutVista(v);$("#k-err").textContent=""},max:9,permitK:true,onEnter:()=>this.seguir()});
+      $("#k-ok",el).onclick=()=>this.seguir();$("#k-q",el).oninput=()=>this.buscar();this.buscar();return}
+    if(this.paso==="confirma"){const p=this.p;
+      el.innerHTML=`<div class="s-wrap s-narrow"><h1 class="s-h1">¿Es esta persona?</h1>
+        <div class="s-card s-persona"><span class="s-ico" aria-hidden="true">👷</span><div><b>${esc(p.nombre)}</b><div>${esc(fmtRut(p.rut))}</div><div class="muted">${esc([p.cargo,p.empresa].filter(Boolean).join(" · "))}</div></div></div>
+        <div class="s-vf"><button class="s-btn ok" id="c-si">✔ Sí</button><button class="s-btn no" id="c-no">✘ No</button></div></div>`;
+      $("#c-si",el).onclick=()=>this.ir({key:p.key||personKey(p.rut),rut:p.rut,nombre:p.nombre,cargo:p.cargo||"",empresa:p.empresa||"",turno:p.turno||""});
+      $("#c-no",el).onclick=()=>{this.paso="rut";this.paint()};return}
+    if(this.paso==="nuevo"){
+      el.innerHTML=`<div class="s-wrap s-narrow"><div><h1 class="s-h1">Trabajador nuevo</h1><p class="s-sub">El RUT ${esc(fmtRut(this.rut))} no está en la nómina. Complete sus datos.</p></div>
+        <label class="s-lbl" for="n-n">Nombre y apellido</label><input id="n-n" class="s-input" autocomplete="off">
+        <span class="s-lbl">Empresa</span><div class="s-row" id="n-e">${["HTP","Reloncaví","Mabe","Otra"].map((x,i)=>`<button type="button" class="s-btn ${i===0?"prim":""}" data-e="${x}">${x}</button>`).join("")}</div>
+        <input id="n-eo" class="s-input" placeholder="Nombre de la empresa" hidden>
+        <label class="s-lbl" for="n-c">Cargo (opcional)</label><input id="n-c" class="s-input" autocomplete="off">
+        <p class="s-err" id="n-err"></p><button class="s-btn prim full" id="n-ok">Continuar ▶</button><button class="s-btn full" id="n-back">◀ Volver</button></div>`;
+      let emp="HTP";$$("[data-e]",el).forEach(b=>b.onclick=()=>{emp=b.dataset.e;$$("[data-e]",el).forEach(x=>x.classList.toggle("prim",x===b));$("#n-eo").hidden=emp!=="Otra";if(emp==="Otra")$("#n-eo").focus()});
+      $("#n-back",el).onclick=()=>{this.paso="rut";this.paint()};
+      $("#n-ok",el).onclick=async()=>{const nom=$("#n-n").value.trim().replace(/\s+/g," ");const empresa=emp==="Otra"?$("#n-eo").value.trim():emp;
+        if(nom.split(" ").length<2){$("#n-err").textContent="Escriba nombre y apellido.";return}
+        const key=personKey(this.rut);const per={key,nombre:nom,rut:rutOk(this.rut)?normRut(this.rut):this.rut,cargo:$("#n-c").value.trim(),empresa,turno:"",activo:true,updatedAt:Date.now()};
+        try{await S.db.doc(`personal/${key}`).set(per)}catch(e){}
+        this.ir(per)};
+      setTimeout(()=>$("#n-n")&&$("#n-n").focus(),50);return}
+  },
+  buscar(){const box=$("#k-l");if(!box)return;const q=normH(($("#k-q")||{}).value||"");
+    const L=activos().filter(x=>q.length>=2&&normH(x.nombre).includes(q)).slice(0,8);
+    box.innerHTML=q.length<2?'<span class="muted">Escriba al menos 2 letras.</span>':L.length?L.map(x=>`<button type="button" class="s-btn full s-left" data-pk="${esc(x.id)}">👷 ${esc(x.nombre)} <span class="muted">${esc(x.cargo||"")}</span></button>`).join(""):'<span class="muted">No se encontró. Use el RUT.</span>';
+    $$("[data-pk]",box).forEach(b=>b.onclick=()=>{const x=S.personal.find(y=>y.id===b.dataset.pk);if(x){this.p=x;this.paso="confirma";this.paint()}})},
+  seguir(){if(!rutOk(this.rut)){this.err=this.rut.length<7?"Escriba el RUT completo, con el número final.":"Ese RUT no es válido. Revíselo.";$("#k-err").textContent=this.err;return}
+    const key=personKey(this.rut);const p=(S.personal||[]).find(x=>(x.key||personKey(x.rut))===key);
+    if(p){this.p=p;this.paso="confirma"}else this.paso="nuevo";this.paint()},
+  ir(per){S2.persona=Object.assign({kiosko:true},per);views.terreno.st=null;location.hash="#terreno"}
+};
+
+/* ---------- pantallas de lectura ---------- */
+const SEC_ICO={1:"🎯",2:"📍",3:"📚",4:"📖",5:"👷",6:"🦺",7:"⚠️",8:"🔢",9:"🚨",10:"🗂️",11:"📈",12:"📎",13:"📝"};
+function pantallasIT(p){
+  const out=[{tipo:"intro",ico:"📘",titulo:p.titulo||p.codigo,texto:"Vamos a leer el instructivo, una parte a la vez. Si prefiere, presione 🔊 Escuchar."}];
+  const secs=(p.secciones||[]).filter(s=>String(s.texto).trim()&&!/^\[completar/i.test(String(s.texto).trim()));
+  const htp=isHtpFormat(p);const clave=[1,2,5,6,7,8,9];const lect=[];
+  secs.forEach(s=>{const n=parseInt(s.titulo,10);if(htp&&!clave.includes(n))return;const ico=SEC_ICO[n]||"📄";const tit=String(s.titulo).replace(/^\d+\.\s*/,"");
+    if(n===8){let cur={titulo:tit,lines:[]};const parts=[cur];
+      String(s.texto).split("\n").forEach(l=>{const m=l.trim().match(/^Paso\s+(\d+)\s*[:.\-–]\s*(.*)$/i);if(m){cur={titulo:`Paso ${m[1]}`,sub:m[2],lines:[]};parts.push(cur)}else cur.lines.push(l)});
+      parts.forEach(x=>{const tx=x.lines.join("\n").trim();if(!tx&&!x.sub)return;const rk=((x.sub||"").match(/Riesgo:\s*(.*)$/)||[])[1]||"";
+        lect.push({tipo:"leer",ico:x.sub?"👉":ico,titulo:x.titulo+(x.sub?": "+x.sub.replace(/\s*[—-]\s*Riesgo:.*$/,""):""),aviso:rk,texto:tx})})}
+    else lect.push({tipo:"leer",ico,titulo:tit,texto:s.texto})});
+  lect.forEach((x,i)=>{x.parte=i+1;x.de=lect.length});
+  return out.concat(lect,[{tipo:"confirmar",que:"IT"}]);
+}
+function pantallasMX(p){
+  const rows=(p.matriz||[]).map(normRow);
+  return[{tipo:"intro",ico:"⚠️",titulo:"Ahora: los riesgos de la tarea",texto:`Va a ver ${rows.length} peligro${rows.length>1?"s":""} y cómo protegerse de cada uno.`}]
+    .concat(rows.map((r,i)=>({tipo:"riesgo",r,parte:i+1,de:rows.length})),[{tipo:"confirmar",que:"MX"}]);
+}
+function pantallaPrueba(p,g){const qs=g==="P"?p.preguntasProc:p.preguntasMat;const min=Math.ceil(qs.length*(+p.aprobacion||80)/100);
+  return[{tipo:"intro",ico:"📝",titulo:g==="P"?"Prueba del instructivo":"Prueba de los riesgos",texto:`Son ${qs.length} preguntas. Toque la respuesta correcta. Necesita ${min} buenas para aprobar.`},{tipo:"prueba",g,qs,min}]}
+const lineas=t=>String(t||"").split("\n").map(x=>x.trim().replace(/^[-•]\s*/,"")).filter(Boolean);
+
+/* ---------- LEER Y FIRMAR (trabajador o equipo del jefe) ---------- */
+views.terreno={
+  mount(el){this.el=el;const per=soyTrabajador()?S2.yo:S2.persona;
+    if(!per){if(soyTrabajador()){el.innerHTML='<div class="s-wrap"><p class="s-sub">Cargando…</p></div>';return}location.hash="#firmar";return}
+    this.per=per;this.st={fase:"lista"};this.paint()},
+  update(){if(this.st&&this.st.fase==="lista"&&this.el&&this.el.isConnected){if(soyTrabajador()&&S2.yo)this.per=S2.yo;this.paint()}},
+  paint(){Voz.parar();const f=this.st.fase;if(f==="lista")this.lista();else if(f==="flujo")this.pantalla();else if(f==="fin")this.fin()},
+  lista(){
+    const per=this.per,el=this.el;
+    const items=vigentes().map(p=>({p,e:estadoDe(p,per.key)})).filter(x=>x.e.total>0)
+      .sort((a,b)=>(b.e.falta.length>0)-(a.e.falta.length>0)||String(a.p.codigo).localeCompare(String(b.p.codigo)));
+    const pend=items.filter(x=>x.e.falta.length).length;
+    el.innerHTML=`<div class="s-wrap">
+      ${per.kiosko?`<div class="s-card s-persona"><span class="s-ico" aria-hidden="true">👷</span><div style="flex:1;min-width:0"><span class="s-lbl">Firmando</span><b>${esc(per.nombre)}</b><div class="muted">${esc([fmtRut(per.rut),per.cargo].filter(Boolean).join(" · "))}</div></div><a class="s-btn" href="#firmar">Cambiar</a></div>`
+        :`<h1 class="s-h1">Hola, ${esc(String(per.nombre||"").split(" ")[0])} 👋</h1>`}
+      <p class="s-sub s-big">${!S.loaded&&!items.length?"Cargando instructivos…":pend?`Tiene <b>${pend}</b> instructivo${pend>1?"s":""} por hacer.`:items.length?"✅ ¡Está todo al día!":"No hay instructivos para leer todavía."}</p>
+      <div class="stack">${items.map(({p,e})=>{const c=!e.falta.length?"ok":e.hechos?"warn":"bad";
+        return`<button type="button" class="s-it ${c}" data-p="${esc(p.id)}"><span class="s-ic" aria-hidden="true">${{ok:"🟢",warn:"🟡",bad:"🔴"}[c]}</span>
+          <span class="s-it-t"><b>${esc(p.titulo||p.codigo)}</b><span>${!e.falta.length?"Listo ✔":"Falta: "+e.falta.map(x=>FALTA_TXT[x]).join(", ")}</span></span>
+          <span class="s-go">${e.falta.length?"Empezar ▶":"Ver de nuevo"}</span></button>`}).join("")}</div>
+      ${per.kiosko?`<a class="s-btn full" href="#inicio">🏠 Terminar</a>`:`<a class="s-tile t-amarillo s-tile-row" href="#idea"><span class="s-ico" aria-hidden="true">💡</span><b>Tengo una idea o vi un problema</b></a>`}
+    </div>`;
+    $$("[data-p]",el).forEach(b=>b.onclick=()=>this.empezar(b.dataset.p));
+  },
+  empezar(id){const p=procById(id);if(!p)return;const e=estadoDe(p,this.per.key);
+    const falta=e.falta.length?e.falta:["leerIT","pruebaIT","leerMX","pruebaMX"].filter(k=>({leerIT:e.d.it,pruebaIT:e.d.qp>0,leerMX:e.d.mx>0,pruebaMX:e.d.qm>0})[k]);
+    let pant=[];if(falta.includes("leerIT"))pant=pant.concat(pantallasIT(p));if(falta.includes("pruebaIT"))pant=pant.concat(pantallaPrueba(p,"P"));
+    if(falta.includes("leerMX"))pant=pant.concat(pantallasMX(p));if(falta.includes("pruebaMX"))pant=pant.concat(pantallaPrueba(p,"M"));
+    pant.push({tipo:"firma"});
+    this.st={fase:"flujo",pid:id,pant,i:0,res:{},int:{P:1,M:1},q:null};this.paint();window.scrollTo(0,0)},
+  ir(i){this.st.i=Math.max(0,Math.min(this.st.pant.length-1,i));this.st.q=null;this.paint();window.scrollTo(0,0)},
+  pantalla(){
+    const st=this.st,el=this.el,p=procById(st.pid),s=st.pant[st.i];if(!p){this.st={fase:"lista"};return this.paint()}
+    const avance=Math.round(st.i*100/(st.pant.length-1||1));
+    const top=`<div class="s-top"><button type="button" class="s-btn s-x" id="s-salir">✕ Salir</button><div class="s-bar" role="progressbar" aria-valuenow="${avance}" aria-valuemin="0" aria-valuemax="100"><span style="width:${avance}%"></span></div><span class="s-mini">${esc(p.codigo||"")}</span></div>`;
+    const nav=(sig="Siguiente ▶",atras=true)=>`<div class="s-nav">${atras&&st.i>0?'<button type="button" class="s-btn" id="s-atras">◀ Atrás</button>':"<span></span>"}<button type="button" class="s-btn prim" id="s-sig">${sig}</button></div>`;
+    let body="",vozTxt="";
+    if(s.tipo==="intro"){body=`<div class="s-card s-center"><span class="s-ico-xl" aria-hidden="true">${s.ico}</span><h1 class="s-h1">${esc(s.titulo)}</h1><p class="s-big">${esc(s.texto)}</p>${vozBtn()}</div>${nav("Comenzar ▶")}`;vozTxt=s.titulo+". "+s.texto}
+    if(s.tipo==="leer"){body=`<div class="s-card"><div class="s-row"><span class="s-ico-l" aria-hidden="true">${s.ico}</span><div style="flex:1;min-width:0"><span class="s-lbl">Parte ${s.parte} de ${s.de}</span><h2 class="s-h2">${esc(s.titulo)}</h2></div></div>
+        ${s.aviso?`<div class="s-aviso">⚠️ Riesgo crítico: ${esc(s.aviso)}</div>`:""}${vozBtn()}<div class="doc s-big">${s.texto?fmtText(s.texto):""}</div></div>${nav()}`;vozTxt=s.titulo+". "+(s.texto||"")}
+    if(s.tipo==="riesgo"){const r=s.r,m=r.p&&r.c?mrInfo(r.p,r.c):null,ctl=lineas(r.control);
+      body=`<div class="s-card"><span class="s-lbl">Peligro ${s.parte} de ${s.de}</span>
+        <div class="s-band ${m?m.k:""}">${m?`Nivel de riesgo: <b>${m.t}</b>`:esc(r.evalIni||"Riesgo evaluado")}</div>${vozBtn()}
+        <div class="s-blk"><span class="s-lbl">⚠️ Peligro</span><ul class="s-big">${lineas(r.peligro).map(x=>`<li>${esc(x.replace(/^[GEMA]:\s*/,""))}</li>`).join("")}</ul></div>
+        <div class="s-blk"><span class="s-lbl">💥 Qué puede pasar</span><p class="s-big">${esc(lineas(r.riesgo).join(". ").replace(/\s*\([A-Z]\d\)/g,""))}${r.dano?`. <b>${esc(r.dano)}</b>`:""}</p></div>
+        <div class="s-blk s-blk-ok"><span class="s-lbl">🛡️ Cómo me protejo</span><ul class="s-big">${ctl.map(x=>{const mm=x.match(/^(Eliminaci[óo]n|Sustituci[óo]n|Ingenier[íi]a|Administrativa|EPP)\s*:\s*(.*)$/i);return`<li>${mm?`<b>${esc(mm[1])}:</b> ${esc(mm[2])}`:esc(x)}</li>`}).join("")}</ul></div>
+        ${r.responsable?`<div class="s-blk"><span class="s-lbl">👤 Responsable</span><p class="s-big">${esc(r.responsable)}</p></div>`:""}</div>${nav()}`;
+      vozTxt=`Peligro: ${lineas(r.peligro).map(x=>x.replace(/^[GEMA]:\s*/,"")).join(". ")}. Qué puede pasar: ${r.riesgo}. ${r.dano}. Cómo me protejo: ${ctl.join(". ")}`}
+    if(s.tipo==="confirmar"){const q=s.que==="IT"?"el instructivo":"los riesgos";
+      body=`<div class="s-card s-center"><span class="s-ico-xl" aria-hidden="true">🤔</span><h1 class="s-h1">¿Leyó y entendió ${q}?</h1>${vozBtn()}
+        <button type="button" class="s-btn ok full s-xl" id="s-si">✔ Sí, entendí</button><button type="button" class="s-btn full" id="s-otra">◀ Volver a leer</button></div>`;vozTxt=`¿Leyó y entendió ${q}?`}
+    if(s.tipo==="prueba")return this.prueba(s,p,top);
+    if(s.tipo==="firma")return this.firma(p,top);
+    el.innerHTML=`<div class="s-wrap">${top}${body}</div>`;
+    this.comunes();
+    $("[data-voz]",el)&&($("[data-voz]",el).onclick=e=>Voz.hablar(vozTxt,e.currentTarget));
+    $("#s-sig",el)&&($("#s-sig",el).onclick=()=>this.ir(st.i+1));$("#s-atras",el)&&($("#s-atras",el).onclick=()=>this.ir(st.i-1));
+    $("#s-si",el)&&($("#s-si",el).onclick=()=>{st.res[s.que==="IT"?"leidoIT":"leidoMX"]=true;this.ir(st.i+1)});
+    $("#s-otra",el)&&($("#s-otra",el).onclick=()=>{let j=st.i-1;while(j>0&&["leer","riesgo"].includes(st.pant[j-1].tipo))j--;this.ir(j)});
+  },
+  comunes(){const b=$("#s-salir",this.el);if(!b)return;b.onclick=()=>{if(b.dataset.c!=="1"){b.dataset.c="1";b.textContent="¿Salir sin guardar?";b.classList.add("no");setTimeout(()=>{if(b.isConnected){b.dataset.c="";b.textContent="✕ Salir";b.classList.remove("no")}},3500);return}
+    this.st={fase:"lista"};this.paint()}},
+  prueba(s,p,top){
+    const st=this.st,el=this.el;st.q??={i:0,resp:[]};const q=st.q;
+    if(q.i<s.qs.length){const it=s.qs[q.i];const vf=it.tipo==="vf";
+      el.innerHTML=`<div class="s-wrap">${top}<div class="s-card"><span class="s-lbl">Pregunta ${q.i+1} de ${s.qs.length}</span>
+        <p class="s-q">${esc(it.q)}</p>${vozBtn()}
+        ${vf?`<div class="s-vf"><button type="button" class="s-btn ok" data-r="0"><span class="s-ico-l">✔</span>Verdadero</button><button type="button" class="s-btn no" data-r="1"><span class="s-ico-l">✘</span>Falso</button></div>`
+          :`<div class="stack">${it.ops.map((o,j)=>`<button type="button" class="s-btn full s-left" data-r="${j}"><b>${"ABCD"[j]}</b> ${esc(o)}</button>`).join("")}</div>`}</div></div>`;
+      this.comunes();
+      $("[data-voz]",el)&&($("[data-voz]",el).onclick=e=>Voz.hablar(it.q+(vf?". ¿Verdadero o falso?":". "+it.ops.map((o,j)=>"ABCD"[j]+": "+o).join(". ")),e.currentTarget));
+      $$("[data-r]",el).forEach(b=>b.onclick=()=>{$$("[data-r]",el).forEach(x=>x.disabled=true);b.classList.add("pick");q.resp[q.i]=+b.dataset.r;setTimeout(()=>{q.i++;Voz.parar();this.pantalla();window.scrollTo(0,0)},350)});
+      return}
+    const buenas=s.qs.filter((x,i)=>q.resp[i]===x.ok).length;const ok=buenas>=s.min;
+    st.res[s.g]={buenas,total:s.qs.length,nota:pct(buenas,s.qs.length),ok,int:st.int[s.g]};
+    const malas=s.qs.map((x,i)=>({x,i})).filter(o=>q.resp[o.i]!==o.x.ok);
+    const corr=x=>x.tipo==="vf"?(x.ok?"Falso":"Verdadero"):x.ops[x.ok];
+    el.innerHTML=`<div class="s-wrap">${top}<div class="s-card s-center ${ok?"s-win":"s-lose"}"><span class="s-ico-xl" aria-hidden="true">${ok?"🎉":"😕"}</span>
+      <h1 class="s-h1">${buenas} de ${s.qs.length} correctas</h1><p class="s-big"><b>${ok?"¡Aprobado!":`Necesita ${s.min} para aprobar.`}</b></p>${vozBtn()}</div>
+      ${!ok&&malas.length?`<div class="s-card"><span class="s-lbl">Repase estas respuestas</span>${malas.map(o=>`<div class="s-blk"><p class="s-big">${esc(o.x.q)}</p><p class="s-big">Respuesta correcta: <b>${esc(corr(o.x))}</b></p>${o.x.just?`<p class="muted">${esc(o.x.just)}</p>`:""}</div>`).join("")}</div>`:""}
+      ${ok?`<button type="button" class="s-btn prim full s-xl" id="s-sig">Continuar ▶</button>`:`<button type="button" class="s-btn prim full s-xl" id="s-rep">🔄 Intentar de nuevo</button><button type="button" class="s-btn full" id="s-firmar">Firmar ahora y repetir otro día</button>`}</div>`;
+    this.comunes();
+    $("[data-voz]",el)&&($("[data-voz]",el).onclick=e=>Voz.hablar(`${buenas} de ${s.qs.length} correctas. ${ok?"Aprobado.":"Necesita "+s.min+" para aprobar."}${!ok?" Repase: "+malas.map(o=>o.x.q+". Respuesta correcta: "+corr(o.x)).join(". "):""}`,e.currentTarget));
+    $("#s-sig",el)&&($("#s-sig",el).onclick=()=>this.ir(st.i+1));
+    $("#s-rep",el)&&($("#s-rep",el).onclick=()=>{st.int[s.g]++;st.q=null;this.pantalla();window.scrollTo(0,0)});
+    $("#s-firmar",el)&&($("#s-firmar",el).onclick=()=>this.ir(st.pant.length-1));
+  },
+  firma(p,top){
+    const st=this.st,el=this.el,r=st.res,per=this.per;
+    const hecho=[r.leidoIT&&"✔ Leyó el instructivo",r.P&&`${r.P.ok?"✔":"✘"} Prueba del instructivo: ${r.P.buenas} de ${r.P.total}`,r.leidoMX&&"✔ Conoce los riesgos",r.M&&`${r.M.ok?"✔":"✘"} Prueba de riesgos: ${r.M.buenas} de ${r.M.total}`].filter(Boolean);
+    if(!hecho.length){el.innerHTML=`<div class="s-wrap">${top}<div class="s-card s-center"><p class="s-big">No hay nada que firmar todavía.</p><button type="button" class="s-btn prim" id="s-vol">◀ Volver</button></div></div>`;this.comunes();$("#s-vol",el).onclick=()=>{this.st={fase:"lista"};this.paint()};return}
+    el.innerHTML=`<div class="s-wrap">${top}<div class="s-card"><h1 class="s-h1">✍️ Firme aquí</h1>
+      <ul class="s-big s-hecho">${hecho.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      <div class="sig s-sig"><canvas id="s-cv" width="1000" height="500" aria-label="Recuadro para firmar con el dedo o el mouse"></canvas><div class="base"></div><div class="lbl">${esc(per.nombre||"")}</div></div>
+      <p class="muted">Firme con el dedo. En computador, mantenga apretado el botón del mouse.</p>
+      <p class="s-err" id="s-ferr"></p>
+      <div class="s-nav"><button type="button" class="s-btn" id="s-borrar">🧽 Borrar</button><button type="button" class="s-btn ok" id="s-guardar">✔ Guardar firma</button></div></div></div>`;
+    this.comunes();
+    const pad=sigPad($("#s-cv",el));$("#s-borrar",el).onclick=()=>pad.clear();
+    $("#s-guardar",el).onclick=async e=>{const b=e.currentTarget;if(pad.empty()){$("#s-ferr").textContent="Falta la firma.";return}
+      b.disabled=true;b.innerHTML='<span class="spin"></span> Guardando…';
+      try{await guardarFirmaSimple(p,per,r,pad.data());st.fase="fin";this.paint();window.scrollTo(0,0)}
+      catch(err){b.disabled=false;b.textContent="✔ Guardar firma";$("#s-ferr").textContent="No se pudo guardar: "+errMsg(err)+" Intente de nuevo."}};
+  },
+  fin(){const el=this.el,per=this.per;
+    el.innerHTML=`<div class="s-wrap s-narrow"><div class="s-card s-center s-win"><span class="s-ico-xl" aria-hidden="true">✅</span><h1 class="s-h1">¡Listo${per.nombre?", "+esc(String(per.nombre).split(" ")[0]):""}!</h1><p class="s-big">La firma quedó guardada.</p></div>
+      ${per.kiosko?`<button type="button" class="s-btn prim full s-xl" id="f-otro">👷 Siguiente trabajador</button><button type="button" class="s-btn full" id="f-mas">Seguir con ${esc(String(per.nombre).split(" ")[0])}</button>`
+        :`<button type="button" class="s-btn prim full s-xl" id="f-mas">◀ Mis instructivos</button>`}</div>`;
+    $("#f-otro",el)&&($("#f-otro",el).onclick=()=>{S2.persona=null;location.hash="#firmar"});
+    $("#f-mas",el).onclick=()=>{this.st={fase:"lista"};this.paint()};
+  }
+};
+async function guardarFirmaSimple(p,per,r,img){
+  const rid=nid();const fecha=Date.now();
+  const reg={pid:p.id,codigo:p.codigo||"",titulo:p.titulo||"",version:String(p.version),nombre:per.nombre||"",rut:rutOk(per.rut)?normRut(per.rut):String(per.rut||""),pkey:per.key,
+    cargo:per.cargo||"",empresa:per.empresa||"",turno:per.turno||"",relator:per.kiosko?String((S.me&&S.me.name)||""):"",modo:(r.P||r.M)?"completa":"difusion",origen:per.kiosko?"equipo-jefe":"trabajador",
+    procLeido:!!r.leidoIT,matLeida:!!r.leidoMX,procNota:r.P?r.P.nota:null,procPuntaje:r.P?`${r.P.buenas}/${r.P.total}`:null,procOk:!!(r.P&&r.P.ok),
+    matNota:r.M?r.M.nota:null,matPuntaje:r.M?`${r.M.buenas}/${r.M.total}`:null,matOk:!!(r.M&&r.M.ok),intentosP:r.P?r.P.int:0,intentosM:r.M?r.M.int:0,fecha,anulado:false};
+  await S.db.doc(`evaluaciones/${S.uid}/firmas/${rid}`).set({img,imgRelator:null,fecha});
+  await S.db.doc(`evaluaciones/${S.uid}/regs/${rid}`).set(reg);
+  await S.db.doc(`evaluaciones/${S.uid}`).set({updatedAt:fecha});
+  if(FB){try{await S.db.doc(`trabajadores/${per.key}/regs/${rid}`).set(Object.assign({owner:S.uid},reg))}catch(e){if(soyTrabajador())throw e}}
+  if(soyTrabajador()){S.misRegs=(S.misRegs||[]).filter(x=>x.id!==rid).concat([Object.assign({id:rid,owner:S.uid},reg)])}
+}
+
+/* ---------- AVANCE (jefes) ---------- */
+views.avance={
+  mount(el){if(soyTrabajador()){location.hash="#terreno";return}this.el=el;this.abierto=this.abierto||{};this.paint()},
+  update(){if(this.el&&this.el.isConnected)this.paint()},
+  paint(){
+    const el=this.el,gente=activos(),vig=vigentes();
+    if(!gente.length){el.innerHTML=`<div class="s-wrap"><h1 class="s-h1">📊 Avance</h1><div class="s-card"><p class="s-big">Primero cargue la lista de trabajadores en <a href="#personal">Nómina de personal</a>.</p><p class="muted">Con la nómina se sabe quién falta en cada instructivo.</p></div><a class="s-btn full" href="#inicio">◀ Volver</a></div>`;return}
+    let T=0,L=0;
+    const rows=vig.map(p=>{const tot=docsDe(p);const n=[tot.it,tot.qp>0,tot.mx>0,tot.qm>0].filter(Boolean).length;if(!n)return null;
+      const est=gente.map(g=>({g,e:estadoDe(p,g.key||personKey(g.rut))}));const listos=est.filter(x=>!x.e.falta.length);const faltan=est.filter(x=>x.e.falta.length);
+      T+=est.length;L+=listos.length;return{p,listos,faltan,pc:pct(listos.length,est.length)}}).filter(Boolean);
+    const col=pc=>pc>=80?"ok":pc>=50?"warn":"bad";const g=T?pct(L,T):0;
+    el.innerHTML=`<div class="s-wrap"><div><h1 class="s-h1">📊 Avance</h1><p class="s-sub">${gente.length} trabajadores en la nómina.</p></div>
+      <div class="s-card s-center"><span class="s-lbl">Avance general</span><span class="s-num ${col(g)}">${g}%</span><div class="s-bar s-bar-l ${col(g)}"><span style="width:${g}%"></span></div></div>
+      ${rows.length?rows.map(x=>`<div class="s-card"><div class="s-row" style="justify-content:space-between"><div style="min-width:0;flex:1"><b class="s-h2" style="font-size:1.2rem">${esc(x.p.titulo||x.p.codigo)}</b><div class="muted">${esc(x.p.codigo||"")}</div></div><span class="s-num-s ${col(x.pc)}">${x.pc}%</span></div>
+        <div class="s-bar s-bar-l ${col(x.pc)}"><span style="width:${x.pc}%"></span></div>
+        <p class="s-big">✅ ${x.listos.length} listos · ⏳ <b>${x.faltan.length} faltan</b></p>
+        ${x.faltan.length?`<button type="button" class="s-btn full" data-ab="${esc(x.p.id)}">${this.abierto[x.p.id]?"▲ Ocultar":"▼ Ver quién falta"}</button>
+          ${this.abierto[x.p.id]?`<div class="stack">${x.faltan.map(f=>`<div class="s-falta"><div style="min-width:0;flex:1"><b>${esc(f.g.nombre)}</b><div class="muted">${esc(f.g.cargo||"")}${f.g.cargo?" · ":""}Falta: ${f.e.falta.map(k=>FALTA_TXT[k]).join(", ")}</div></div><button type="button" class="s-btn prim" data-fir="${esc(f.g.id)}">✍️ Firmar</button></div>`).join("")}</div>`:""}`:""}</div>`).join(""):'<div class="s-card"><p class="s-big">No hay instructivos vigentes todavía.</p></div>'}
+      <a class="s-btn full" href="#inicio">◀ Volver</a></div>`;
+    $$("[data-ab]",el).forEach(b=>b.onclick=()=>{this.abierto[b.dataset.ab]=!this.abierto[b.dataset.ab];this.paint()});
+    $$("[data-fir]",el).forEach(b=>b.onclick=()=>{const x=S.personal.find(y=>y.id===b.dataset.fir);if(x)views.firmar.ir({key:x.key||personKey(x.rut),rut:x.rut,nombre:x.nombre,cargo:x.cargo||"",empresa:x.empresa||"",turno:x.turno||""})});
+  }
+};
+
+/* ---------- IDEAS Y PROBLEMAS (simple) ---------- */
+views.idea={
+  mount(el){this.el=el;this.tipo="idea";this.ok=false;this.paint()},
+  paint(){const el=this.el,vol=soyTrabajador()?"#terreno":"#inicio";
+    if(this.ok){el.innerHTML=`<div class="s-wrap s-narrow"><div class="s-card s-center s-win"><span class="s-ico-xl" aria-hidden="true">🙌</span><h1 class="s-h1">¡Gracias!</h1><p class="s-big">Su mensaje le llegó al Jefe de Operaciones.</p></div><a class="s-btn prim full s-xl" href="${vol}">◀ Volver</a></div>`;return}
+    el.innerHTML=`<div class="s-wrap s-narrow"><div><h1 class="s-h1">💡 Ideas y problemas</h1><p class="s-sub">Cuéntenos qué mejorar o qué problema vio.</p></div>
+      <div class="s-vf"><button type="button" class="s-btn ${this.tipo==="idea"?"prim":""}" data-t="idea"><span class="s-ico-l">💡</span>Tengo una idea</button><button type="button" class="s-btn ${this.tipo==="problema"?"no":""}" data-t="problema"><span class="s-ico-l">⚠️</span>Vi un problema</button></div>
+      <label class="s-lbl" for="i-p">¿Sobre qué instructivo?</label><select id="i-p" class="s-input"><option value="">Otro / general</option>${vigentes().map(p=>`<option value="${esc(p.id)}">${esc(p.titulo||p.codigo)}</option>`).join("")}</select>
+      <label class="s-lbl" for="i-x">Escriba aquí</label><textarea id="i-x" class="s-input" rows="5" placeholder="${this.tipo==="idea"?"Ej.: sería mejor revisar los frenos antes de la VIT":"Ej.: en el patio 2 falta señalización"}"></textarea>
+      <p class="s-err" id="i-err"></p><button type="button" class="s-btn ok full s-xl" id="i-go">Enviar ✔</button><a class="s-btn full" href="${vol}">◀ Volver</a></div>`;
+    $$("[data-t]",el).forEach(b=>b.onclick=()=>{const x=$("#i-x").value;this.tipo=b.dataset.t;this.paint();$("#i-x").value=x});
+    $("#i-go",el).onclick=async e=>{const t=$("#i-x").value.trim();if(t.length<5){$("#i-err").textContent="Escriba un poco más.";return}
+      const b=e.currentTarget;b.disabled=true;const p=procById($("#i-p").value);
+      try{await S.db.doc(`mejoras/${S.uid}/items/${nid()}`).set({pid:p?p.id:null,codigo:p?p.codigo:"General",titulo:p?p.titulo:"",tipo:this.tipo==="idea"?"Mejora propuesta":"Desviación detectada",texto:t,nombre:String((S.me&&S.me.name)||""),estado:"nueva",respuesta:"",fecha:Date.now()});
+        await S.db.doc(`mejoras/${S.uid}`).set({updatedAt:Date.now()});this.ok=true;this.paint()}
+      catch(err){b.disabled=false;$("#i-err").textContent="No se pudo enviar: "+errMsg(err)}};
+  }
+};
+
+/* ---------- nómina: reiniciar clave de trabajador ---------- */
+if(views.personal&&views.personal.update){const _pu=views.personal.update;views.personal.update=function(){_pu.apply(this,arguments);
+  $$("[data-pin]").forEach(b=>b.onclick=async()=>{if(b.dataset.c!=="1"){b.dataset.c="1";b.textContent="¿Confirmar?";return}
+    try{const r=S.db.doc(`accesos/${b.dataset.pin}`);const s=await r.get();const v=(s.exists?(+s.data().v||0):0)+1;await r.set({v,actualizado:Date.now()});b.textContent="Clave reiniciada ✓";b.disabled=true;toast("Listo: al entrar, el trabajador creará una clave nueva.")}
+    catch(e){toast(errMsg(e))}})}}
+
 /* ---------- exportaciones ---------- */
 async function saveFile(filename,data){
   if(!S.downloads){toast("La descarga de archivos no está disponible en esta vista.");return}
@@ -1879,9 +2292,11 @@ async function registroPDF(p,regs){
 }
 
 /* ---------- conexión Firebase ---------- */
-const ROLES={pendiente:["Pendiente","warn"],colaborador:["Colaborador","info"],editor:["Editor","ok"],admin:["Administrador","ok"]};
+const ROLES={pendiente:["Pendiente","warn"],trabajador:["Trabajador","info"],colaborador:["Colaborador","info"],editor:["Editor","ok"],admin:["Administrador","ok"]};
+const WK_DOM="@trabajadores.htp.app";const wkMail=(rut,v)=>`${normRut(rut).toLowerCase()}.${v||0}${WK_DOM}`;const wkPass=(rut,pin)=>`HTP-${pin}-${normRut(rut)}`;
+const esTrab=u=>!!(u&&u.email&&u.email.endsWith(WK_DOM));
 let auth=null,fdb=null,storage=null,dataUnsubs=[],userUnsub=null;
-function stopData(){dataUnsubs.forEach(u=>{try{u()}catch{}});dataUnsubs=[];subs.regs={};subs.mej={};S.procs=[];S.personal=[];S.regs={};S.mejoras={};S.usuarios=[];S.loaded=false;S.dbErr=null}
+function stopData(){dataUnsubs.forEach(u=>{try{u()}catch{}});dataUnsubs=[];subs.regs={};subs.mej={};S.procs=[];S.personal=[];S.misRegs=[];S.regs={};S.mejoras={};S.usuarios=[];S.loaded=false;S.dbErr=null}
 function fbErr(e){
   const m={"auth/invalid-email":"El correo no es válido.","auth/user-not-found":"No existe una cuenta con ese correo.","auth/wrong-password":"Contraseña incorrecta.","auth/invalid-credential":"Correo o contraseña incorrectos.","auth/email-already-in-use":"Ya existe una cuenta con ese correo. Use “Ingresar”.","auth/weak-password":"La contraseña debe tener al menos 6 caracteres.","auth/too-many-requests":"Demasiados intentos. Espere unos minutos.","auth/network-request-failed":"Sin conexión a internet.","auth/popup-closed-by-user":"Se cerró la ventana de inicio de sesión.","auth/unauthorized-domain":"Este dominio no está autorizado en Firebase (Authentication → Settings → Authorized domains)."};
   return m[e&&e.code]||(e&&e.message)||"No se pudo completar la acción.";
@@ -1979,8 +2394,56 @@ function manualAI(prompt,nota){
 }
 function showLogin(){
   document.body.classList.remove("authok");$("#who").innerHTML="";$("#status").textContent="";
+  $("#view").innerHTML=`<div class="s-wrap s-narrow"><div><h1 class="s-h1">Bienvenido 👋</h1><p class="s-sub">Instructivos de trabajo · Unidad Terminal Marítimo</p></div>
+    <div class="s-tiles"><button type="button" class="s-tile t-azul" id="lg-t"><span class="s-ico" aria-hidden="true">👷</span><b>Soy trabajador</b><span>Entro con mi RUT y mi clave de 4 números.</span></button>
+    <button type="button" class="s-tile t-gris" id="lg-j"><span class="s-ico" aria-hidden="true">🧑‍💼</span><b>Soy jefe o supervisor</b><span>Entro con mi correo.</span></button></div></div>`;
+  $("#lg-t").onclick=()=>loginTrabajador();$("#lg-j").onclick=()=>loginCorreo();
+}
+function loginTrabajador(){
+  const el=$("#view");const st={paso:"rut",rut:"",pin:"",pin1:"",v:0,creada:false};
+  const dots=n=>`<div class="s-dots" aria-label="${n} de 4 números">${[0,1,2,3].map(i=>`<span class="${i<n?"on":""}"></span>`).join("")}</div>`;
+  const paint=(err="")=>{
+    if(st.paso==="rut"){
+      el.innerHTML=`<div class="s-wrap s-narrow"><div><h1 class="s-h1">👷 Escriba su RUT</h1><p class="s-sub">Con el número o la K del final.</p></div>
+        <div class="s-display" id="k-d">${rutVista(st.rut)}</div><p class="s-err" id="k-err">${esc(err)}</p>${teclado("rut")}
+        <button type="button" class="s-btn prim full s-xl" id="k-ok">Continuar ▶</button><button type="button" class="s-btn full" id="k-back">◀ Volver</button></div>`;
+      bindTeclado(el,{get:()=>st.rut,set:v=>{st.rut=v;$("#k-d").innerHTML=rutVista(v);$("#k-err").textContent=""},max:9,permitK:true,onEnter:()=>$("#k-ok").click()});
+      $("#k-back").onclick=showLogin;
+      $("#k-ok").onclick=async e=>{if(!rutOk(st.rut)){$("#k-err").textContent=st.rut.length<7?"Escriba el RUT completo.":"Ese RUT no es válido. Revíselo.";return}
+        const b=e.currentTarget;b.disabled=true;b.innerHTML='<span class="spin"></span> Revisando…';
+        try{const a=await fdb.doc(`accesos/${normRut(st.rut)}`).get();const d=a.exists?a.data():{};st.v=+d.v||0;st.creada=!!d.creada}catch(e){st.v=0;st.creada=false}
+        st.paso=st.creada?"pin":"nuevo";st.pin="";st.pin1="";paint()};
+      return}
+    const titulo={pin:"🔒 Escriba su clave",nuevo:"🔑 Cree su clave",repite:"🔑 Repita su clave"}[st.paso];
+    const sub={pin:"Son 4 números.",nuevo:"Es su primera vez. Elija 4 números fáciles de recordar.",repite:"Escriba los mismos 4 números otra vez."}[st.paso];
+    el.innerHTML=`<div class="s-wrap s-narrow"><div><h1 class="s-h1">${titulo}</h1><p class="s-sub">${esc(fmtRut(st.rut))} · ${sub}</p></div>
+      ${dots(st.pin.length)}<p class="s-err" id="k-err">${esc(err)}</p>${teclado("pin")}
+      ${st.paso==="pin"?'<button type="button" class="s-btn full" id="k-olv">Olvidé mi clave</button>':""}<button type="button" class="s-btn full" id="k-back">◀ Cambiar RUT</button></div>`;
+    $("#k-back").onclick=()=>{st.paso="rut";paint()};
+    $("#k-olv")&&($("#k-olv").onclick=()=>{$("#k-err").innerHTML="Pida a su jefe que <b>reinicie su clave</b>. Después entre de nuevo y cree una clave nueva."});
+    bindTeclado(el,{get:()=>st.pin,max:4,set:v=>{st.pin=v;$(".s-dots").outerHTML=dots(v.length);$("#k-err").textContent="";if(v.length===4)setTimeout(enviar,180)}});
+  };
+  const enviar=async()=>{
+    const rut=normRut(st.rut),pin=st.pin;
+    if(st.paso==="nuevo"){if(/^(\d)\1{3}$/.test(pin)||pin==="1234"){st.pin="";return paint("Esa clave es muy fácil de adivinar. Elija otra.")}st.pin1=pin;st.pin="";st.paso="repite";return paint()}
+    if(st.paso==="repite"&&pin!==st.pin1){st.pin="";st.pin1="";st.paso="nuevo";return paint("Las claves no son iguales. Empecemos de nuevo.")}
+    $("#k-err").innerHTML='<span class="spin"></span> Entrando…';$$("[data-k]").forEach(b=>b.disabled=true);
+    try{
+      if(st.paso==="pin")await auth.signInWithEmailAndPassword(wkMail(rut,st.v),wkPass(rut,pin));
+      else{S.wkNuevo=true;await auth.createUserWithEmailAndPassword(wkMail(rut,st.v),wkPass(rut,pin))}
+    }catch(e){
+      S.wkNuevo=false;st.pin="";
+      if(e.code==="auth/email-already-in-use"){st.paso="pin";return paint("Usted ya tiene una clave. Escríbala.")}
+      if(e.code==="auth/invalid-credential"||e.code==="auth/wrong-password"||e.code==="auth/user-not-found")return paint("Clave incorrecta. Intente de nuevo.");
+      paint(fbErr(e));
+    }
+  };
+  paint();
+}
+function loginCorreo(){
+  document.body.classList.remove("authok");
   const el=$("#view");
-  el.innerHTML=`<section class="login panel stack"><div><p class="eyebrow">Unidad Terminal Marítimo</p><h1>Ingresar</h1><p class="lede">Use su correo y contraseña. Si es primera vez, cree su cuenta; el administrador la aprobará.</p></div>
+  el.innerHTML=`<section class="login panel stack"><div><p class="eyebrow">Jefes y supervisores</p><h1>Ingresar</h1><p class="lede">Use su correo y contraseña. Si es primera vez, cree su cuenta; el administrador la aprobará.</p></div>
     <div class="subtabs" role="tablist"><button role="tab" data-m="in" aria-selected="true">Ingresar</button><button role="tab" data-m="up" aria-selected="false">Crear cuenta</button></div>
     <form id="lf" class="stack" novalidate>
       <label class="f" data-only="up" hidden>Nombre completo<input type="text" id="l-n" autocomplete="name"></label>
@@ -1989,7 +2452,9 @@ function showLogin(){
       <p class="small" id="l-err" style="color:var(--bad)"></p>
       <div class="row"><button class="btn primary" type="submit" id="l-go">Ingresar</button><button class="btn ghost" type="button" id="l-reset" data-only="in">Olvidé mi contraseña</button></div>
     </form>
-    ${CFG.loginMicrosoft?'<div class="row"><span class="sp hint">o</span></div><button class="btn" id="l-ms">Ingresar con cuenta Microsoft 365</button>':""}</section>`;
+    ${CFG.loginMicrosoft?'<div class="row"><span class="sp hint">o</span></div><button class="btn" id="l-ms">Ingresar con cuenta Microsoft 365</button>':""}
+    <button type="button" class="btn ghost" id="l-back">◀ Volver</button></section>`;
+  $("#l-back").onclick=showLogin;
   let mode="in";
   const setMode=m=>{mode=m;$$(".login .subtabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.m===m));$$("[data-only]").forEach(x=>x.hidden=x.dataset.only!==m);$("#l-go").textContent=m==="in"?"Ingresar":"Crear cuenta";$("#l-p").autocomplete=m==="in"?"current-password":"new-password";$("#l-err").textContent=""};
   $$(".login .subtabs button").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
@@ -2030,13 +2495,27 @@ function startData(u){
   }
   route();
 }
+async function startWorker(u){
+  stopData();S.db=fdb;S.canEdit=false;S.isAdmin=false;
+  document.body.classList.add("authok","trab");renderWho(u);
+  const rut=S.wkRut;let per={};
+  try{const p=await fdb.doc(`personal/${rut}`).get();per=p.exists?p.data():{}}catch(e){}
+  S2.yo={key:rut,rut,nombre:per.nombre||S.me.name||"",cargo:per.cargo||"",empresa:per.empresa||"",turno:per.turno||""};
+  S.me={name:S2.yo.nombre};renderWho(u);
+  if(per.nombre&&S.wkNombre!==per.nombre){fdb.doc(`usuarios/${u.uid}`).update({nombre:per.nombre}).catch(()=>{})}
+  dataUnsubs.push(fdb.collection("procedimientos").onSnapshot(s=>{S.procs=s.docs.map(d=>({id:d.id,...d.data()}));if(!s.metadata.fromCache)S.loaded=true;update()},e=>{S.dbErr=errMsg(e);update()}));
+  dataUnsubs.push(fdb.collection(`trabajadores/${rut}/regs`).onSnapshot(s=>{S.misRegs=s.docs.map(d=>({id:d.id,...d.data()}));update()},()=>{}));
+  subMej(S.uid);
+  if(!location.hash||!["#terreno","#idea"].includes(location.hash))location.hash="#terreno";
+  route();
+}
 views.usuarios={
   mount(el){el.innerHTML=`<section class="pagehead"><div><p class="eyebrow">Administración</p><h1>Usuarios y roles</h1><p class="lede">Apruebe las cuentas nuevas y asigne su rol. <b>Colaborador</b>: registra difusiones, firmas, personal y mejoras. <b>Editor</b>: además crea, carga y edita procedimientos y responde mejoras. <b>Administrador</b>: además gestiona usuarios.</p></div></section><section class="panel"><div data-slot="u"></div></section>`;this.update()},
   update(){
     const box=$('#view [data-slot="u"]');if(!box)return;if(!S.isAdmin){box.innerHTML='<div class="empty"><b>Solo el administrador gestiona usuarios.</b></div>';return}
     const list=(S.usuarios||[]).slice().sort((a,b)=>(a.rol==="pendiente"?0:1)-(b.rol==="pendiente"?0:1)||String(a.nombre).localeCompare(String(b.nombre)));
     if(!list.length){box.innerHTML='<div class="empty">Sin usuarios registrados.</div>';return}
-    box.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Creado</th><th>Rol</th></tr></thead><tbody>${list.map(u=>`<tr><td>${esc(u.nombre)}${u.id===S.uid?' <span class="chip">usted</span>':""}</td><td class="small">${esc(u.email)}</td><td class="code">${fmtDate(u.creado)}</td><td><select data-rol="${esc(u.id)}" ${u.id===S.uid?"disabled":""} style="max-width:180px">${Object.entries(ROLES).map(([k,[l]])=>`<option value="${k}"${u.rol===k?" selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`;
+    box.innerHTML=`<p class="small muted" style="margin-bottom:10px">Los trabajadores que entran con RUT y clave aparecen con rol Trabajador; no necesitan aprobación.</p><div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Creado</th><th>Rol</th></tr></thead><tbody>${list.map(u=>`<tr><td>${esc(u.nombre)}${u.id===S.uid?' <span class="chip">usted</span>':""}</td><td class="small">${esc(u.rut?"RUT "+fmtRut(u.rut):u.email)}</td><td class="code">${fmtDate(u.creado)}</td><td><select data-rol="${esc(u.id)}" ${u.id===S.uid?"disabled":""} style="max-width:180px">${Object.entries(ROLES).filter(([k])=>k!=="trabajador"||u.rol==="trabajador").map(([k,[l]])=>`<option value="${k}"${u.rol===k?" selected":""}>${l}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table></div>`;
     $$("[data-rol]",box).forEach(s=>s.onchange=async()=>{try{await fdb.doc(`usuarios/${s.dataset.rol}`).update({rol:s.value});toast("Rol actualizado")}catch(e){toast(errMsg(e))}});
   }
 };
@@ -2046,14 +2525,25 @@ async function boot(){
   S.downloads={save:async({filename,data})=>{const blob=data instanceof Blob?data:new Blob([data]);const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000);return{status:"saved"}}};
   S.sample=aiAdapter();S.ready=true;
   auth.onAuthStateChanged(async u=>{
-    if(userUnsub){userUnsub();userUnsub=null}stopData();S.db=null;
+    if(userUnsub){userUnsub();userUnsub=null}stopData();S.db=null;S.rol=null;S2.yo=null;S2.persona=null;document.body.classList.remove("trab");
     if(!u){S.uid=null;showLogin();return}
     S.uid=u.uid;$("#status").textContent="";
     document.body.classList.remove("authok");
-    $("#view").innerHTML=`<section class="login panel stack"><p class="eyebrow">Sesión iniciada</p><h1>Verificando su cuenta</h1><p class="row"><span class="spin"></span> Conectando con la base de datos como <b>${esc(u.email||"")}</b>…</p><p class="small muted" id="vf-msg"></p><div class="row"><button class="btn" id="vf-out">Cerrar sesión</button></div></section>`;
+    $("#view").innerHTML=`<section class="login panel stack"><p class="eyebrow">Sesión iniciada</p><h1>${esTrab(u)?"Entrando…":"Verificando su cuenta"}</h1><p class="row"><span class="spin"></span> Conectando${esTrab(u)?"":` como <b>${esc(u.email||"")}</b>`}…</p><p class="small muted" id="vf-msg"></p><div class="row"><button class="btn" id="vf-out">Cerrar sesión</button></div></section>`;
     $("#vf-out").onclick=()=>auth.signOut();
     const slow=setTimeout(()=>{const m=$("#vf-msg");if(m)m.innerHTML='La conexión está tardando más de lo normal. Si está en la red de la empresa, puede que bloquee Firebase: pruebe desde el celular con datos móviles o pida a TI habilitar <code>firestore.googleapis.com</code>. <button class="btn sm" onclick="location.reload()">Reintentar</button>'},15000);
     const ref=fdb.doc(`usuarios/${u.uid}`);
+    if(esTrab(u)){
+      const m=u.email.slice(0,-WK_DOM.length).match(/^(.+)\.(\d+)$/);const rut=normRut(m?m[1]:"");S.wkRut=rut;
+      try{const s=await ref.get();
+        if(!s.exists){await ref.set({nombre:"",email:u.email,rut,rol:"trabajador",creado:Date.now()});S.wkNombre=""}else S.wkNombre=(s.data()||{}).nombre||"";
+        await fdb.doc(`accesos/${rut}`).set({v:+(m&&m[2])||0,creada:true},{merge:true}).catch(()=>{});
+      }catch(e){clearTimeout(slow);
+        if(S.wkNuevo){try{await u.delete()}catch{}}S.wkNuevo=false;
+        $("#view").innerHTML=`<div class="s-wrap s-narrow"><div class="s-card s-center s-lose"><span class="s-ico-xl" aria-hidden="true">🙋</span><h1 class="s-h1">Su RUT no está en la lista</h1><p class="s-big">Pida a su jefe que lo agregue a la nómina de personal. Después vuelva a entrar.</p></div><button type="button" class="s-btn prim full s-xl" id="vf-o2">◀ Volver</button></div>`;
+        $("#vf-o2").onclick=()=>auth.signOut();return}
+      S.wkNuevo=false;
+    }else
     try{const s=await ref.get();if(!s.exists)await ref.set({nombre:S.pendingName||u.displayName||u.email,email:u.email||"",rol:"pendiente",creado:Date.now()})}
     catch(e){clearTimeout(slow);const m=$("#vf-msg");if(m)m.innerHTML=`No se pudo leer su cuenta: ${esc(e.code||"")} ${esc(e.message||"")}. <button class="btn sm" onclick="location.reload()">Reintentar</button>`;return}
     clearTimeout(slow);
@@ -2061,6 +2551,7 @@ async function boot(){
     userUnsub=ref.onSnapshot(s=>{const d=s.data()||{};S.me={name:d.nombre||u.displayName||u.email};S.rol=d.rol||"pendiente";
       if(S.rol===lastRol){renderWho(u);return}lastRol=S.rol;
       if(S.rol==="pendiente"){stopData();S.db=null;$("#status").textContent="";showPending(u);return}
+      if(S.rol==="trabajador"){startWorker(u);return}
       if(S.ev&&!S.ev.w.nombre)S.ev.w.nombre=S.me.name;startData(u)},e=>{$("#status").textContent="No se pudo leer su cuenta: "+errMsg(e)});
   });
 }

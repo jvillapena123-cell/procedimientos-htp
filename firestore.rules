@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // Reglas de acceso de la aplicación de Procedimientos HTP.
-// Roles (campo "rol" en usuarios/{uid}): pendiente · colaborador · editor · admin
+// Roles (campo "rol" en usuarios/{uid}): pendiente · trabajador · colaborador · editor · admin
+// Los trabajadores entran con RUT + clave de 4 números (cuenta <rut>.<n>@trabajadores.htp.app).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -12,6 +13,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
         && perfil().rol in ['colaborador', 'editor', 'admin'];
     }
+    function trabajador() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && perfil().rol == 'trabajador';
+    }
+    function miRut() { return perfil().rut; }
+    // Correo técnico de un trabajador: 12345678-5.0@trabajadores.htp.app
+    function correoTrabajador(rut) {
+      return signedIn() && request.auth.token.email.matches(rut.lower() + '[.][0-9]+@trabajadores[.]htp[.]app');
+    }
     function editor() { return aprobado() && perfil().rol in ['editor', 'admin']; }
     function admin() { return aprobado() && perfil().rol == 'admin'; }
     function propio(uid) { return signedIn() && request.auth.uid == uid; }
@@ -19,39 +30,65 @@ service cloud.firestore {
     // Cuentas: cada persona crea la suya como "pendiente"; solo el administrador asigna roles.
     match /usuarios/{uid} {
       allow read: if propio(uid) || editor();
-      allow create: if propio(uid) && request.resource.data.rol == 'pendiente';
+      allow create: if propio(uid) && (
+        request.resource.data.rol == 'pendiente'
+        || (request.resource.data.rol == 'trabajador'
+            && correoTrabajador(request.resource.data.rut)
+            && exists(/databases/$(database)/documents/personal/$(request.resource.data.rut))));
       allow update: if admin()
-        || (propio(uid) && request.resource.data.rol == resource.data.rol);
+        || (propio(uid) && request.resource.data.rol == resource.data.rol
+            && request.resource.data.get('rut', null) == resource.data.get('rut', null));
       allow delete: if admin();
     }
 
     // Biblioteca de procedimientos, matrices y preguntas.
     match /procedimientos/{id} {
-      allow read: if aprobado();
+      allow read: if aprobado() || trabajador();
       allow write: if editor();
     }
 
     // Nómina de personal (base del % de cobertura).
     match /personal/{id} {
       allow read, write: if aprobado();
+      allow get: if trabajador() && miRut() == id;
+    }
+
+    // Versión de la clave de cada trabajador. El jefe la reinicia subiendo "v".
+    match /accesos/{rut} {
+      allow get: if true;
+      allow write: if aprobado()
+        || (correoTrabajador(rut) && request.resource.data.creada == true
+            && request.auth.token.email.matches(rut.lower() + '[.]' + string(request.resource.data.v) + '@.*'));
+    }
+
+    // Copia de los registros por trabajador (así cada uno ve su propio avance).
+    match /trabajadores/{rut}/regs/{rid} {
+      allow read: if aprobado() || (trabajador() && miRut() == rut);
+      allow create: if request.resource.data.owner == request.auth.uid
+        && request.resource.data.pkey == rut
+        && (aprobado() || (trabajador() && miRut() == rut));
+      allow update: if aprobado()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['anulado', 'anuladoAt']);
+      allow delete: if false;
     }
 
     // Registros de difusión y evaluación. Cada cuenta escribe solo los suyos.
     // Una vez firmado, el registro no se edita ni se borra: solo su autor puede anularlo.
     match /evaluaciones/{uid} {
       allow read: if aprobado();
-      allow write: if aprobado() && propio(uid);
+      allow write: if (aprobado() || trabajador()) && propio(uid);
 
       match /regs/{rid} {
         allow read: if aprobado();
-        allow create: if aprobado() && propio(uid);
+        allow create: if propio(uid)
+          && (aprobado() || (trabajador() && request.resource.data.pkey == miRut()));
         allow update: if aprobado() && propio(uid)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['anulado', 'anuladoAt']);
         allow delete: if false;
       }
       match /firmas/{rid} {
         allow read: if aprobado();
-        allow create: if aprobado() && propio(uid);
+        allow create: if (aprobado() || trabajador()) && propio(uid);
         allow update, delete: if false;
       }
     }
@@ -59,11 +96,11 @@ service cloud.firestore {
     // Comentarios de mejora: los ve quien los envió y los editores; solo editores responden.
     match /mejoras/{uid} {
       allow read: if propio(uid) || editor();
-      allow write: if aprobado() && propio(uid);
+      allow write: if (aprobado() || trabajador()) && propio(uid);
 
       match /items/{id} {
         allow read: if propio(uid) || editor();
-        allow create: if aprobado() && propio(uid) && request.resource.data.estado == 'nueva';
+        allow create: if (aprobado() || trabajador()) && propio(uid) && request.resource.data.estado == 'nueva';
         allow update: if editor()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'respuesta', 'respondidoAt']);
         allow delete: if false;
